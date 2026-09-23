@@ -1,0 +1,37 @@
+# 统一行尾：仓库内文本文件一律 LF。
+# Windows 上的编辑器（记事本除外）与 Git 会按此规则处理，
+# 避免出现「一个文件里 CRLF 与 LF 混杂」导致行尾差异污染 diff，
+# 也避免源码里的 CRLF 混进自动生成的文档。
+* text=auto eol=lf
+*.py      text eol=lf
+*.pyi     text eol=lf
+*.md      text eol=lf
+*.txt     text eol=lf
+*.in      text eol=lf
+*.toml    text eol=lf
+*.cfg     text eol=lf
+*.json    text eol=lf
+*.csv     text eol=lf
+*.svg     text eol=lf
+*.html    text eol=lf
+*.yml     text eol=lf
+*.yaml    text eol=lf
+.gitignore text eol=lf
+LICENSE   text eol=lf
+
+# 二进制文件不做行尾转换
+*.png     binary
+*.jpg     binary
+*.jpeg    binary
+*.gif     binary
+*.ico     binary
+*.pdf     binary
+*.zip     binary
+*.whl     binary
+*.tar.gz  binary
+*.ttf     binary
+*.otf     binary
+
+# 自动生成的双语文档：GitHub 语言统计里不算作散文，折叠 diff
+malight/**/*.md linguist-documentation
+README.en.md linguist-documentation

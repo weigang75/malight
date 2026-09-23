@@ -1,0 +1,82 @@
+[build-system]
+requires = ["setuptools>=77", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "malight"
+dynamic = ["version"]
+description = "malight - SVG drawing toolkit ported and enhanced from Shenbi Maliang, with PS/AI-style filters and a plugin extension mechanism"
+# PyPI 只渲染一份 README，而它的页面上相对链接全是 404。
+# README.pypi.md 由 tools/pypi_readme.py 从 README.en.md 生成：
+# 仓库地址填好后链接自动变绝对地址，没填则退化成纯文本，不留死链。
+# 仓库根仍保留 README.md（中文）/ README.en.md（英文），供 GitHub / Gitee 渲染。
+readme = "README.pypi.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "malight contributors" }]
+keywords = ["svg", "drawing", "vector", "2d", "graphics", "filter", "magicpen", "malight"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Multimedia :: Graphics",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+# 核心绘图零第三方依赖；导出/字体工具为可选增强
+requires-python = ">=3.8"
+dependencies = []
+
+[project.optional-dependencies]
+# PNG/PDF 导出
+export = ["cairosvg"]
+# 文字转路径 / SVG 路径分析
+fontpath = ["fontTools", "svgpathtools"]
+# 全部可选能力
+full = ["cairosvg", "fontTools", "svgpathtools"]
+
+[project.urls]
+# 填了 Homepage 之后 tools/pypi_readme.py 会把 PyPI 页里的相对链接
+# 自动改写成 {Homepage}/blob/main/... 的绝对链接：
+Homepage = "https://github.com/weigang75/malight"
+Repository = "https://github.com/weigang75/malight"
+Issues = "https://github.com/weigang75/malight/issues"
+
+[tool.setuptools]
+# 关键：关掉 setuptools 默认开启的 include-package-data。
+# 打开时，凡是被 MANIFEST.in 匹配到、又位于包目录内的文件都会被塞进 wheel ——
+# 于是 malight/**/*.zh.md 与 *.en.md（每个模块旁的两份单语文档）会跟着 wheel
+# 一起发出去，安装体积凭空多出约 190 KB 的说明文档。关掉后：
+#   * sdist（源码包）依然带这些 .md，方便离线查阅；
+#   * wheel 只装下面 package-data 里显式列出的东西（py.typed）。
+include-package-data = false
+
+# 自动发现 malight 及其全部子包（elements / board / pathkit …），
+# 避免新增子包后忘记登记、发出去的 wheel 少文件。
+# 仓库根的 magicpen/ 只是兼容 shim，源码目录专用，不进 wheel。
+[tool.setuptools.packages.find]
+include = ["malight*"]
+exclude = ["magicpen*", "examples*", "tests*"]
+
+[tool.setuptools.dynamic]
+version = { attr = "malight.__version__" }
+
+# PEP 561 类型标记：随包发布 py.typed，让 PyCharm/VSCode 在 pip 安装后
+# 依然能对 pen.circle(...) 等方法给出返回类型提示。
+#
+# 注意：这里**故意不含** "*.md"。每个模块旁的双语文档（malight/xxx.zh.md、
+# malight/xxx.en.md；文件名用 ISO 639-1 语言码，与 Language.ZH /
+# MALIGHT_LANG=zh 保持一致）跟着源码走，随 sdist 分发便于离线查阅，但不进
+# wheel，免得安装体积凭空多出三百多 KB 的说明文档。
+#
+# assets/images/*.png 是**例外**：包内资源目录（malight/assets/）要随包分发
+# —— 效果预览图 pip 装完也能看，malight.asset_path() 在任何环境都能找到它们
+# （代价：whl 增大约 0.7 MB；文档 .md 仍然不进 wheel）。
+[tool.setuptools.package-data]
+"malight" = ["py.typed", "assets/images/*.png"]

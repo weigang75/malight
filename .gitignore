@@ -1,0 +1,33 @@
+# Python 缓存与字节码
+__pycache__/
+*.py[cod]
+*$py.class
+
+# 构建产物
+build/
+dist/
+*.egg-info/
+malight.egg-info/
+
+# 虚拟环境
+.venv/
+venv/
+env/
+
+# IDE / 编辑器
+.idea/
+.vscode/
+*.swp
+.DS_Store
+
+# 示例与自检的输出文件（仓库只留脚本，不留生成物）
+output/
+examples/output/
+
+# 路径编辑器存档（demo 里的临时文件）
+*_points.json
+
+# 发布凭据，绝不入库
+.pypirc
+.twine
+*.pem

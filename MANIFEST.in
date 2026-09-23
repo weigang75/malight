@@ -1,0 +1,26 @@
+# sdist 源码包附带文件 / files bundled into the sdist
+include LICENSE
+include README.md
+include README.en.md
+# PyPI 说明页：由 tools/pypi_readme.py 从 README.en.md 生成，也是 pyproject 的 readme
+include README.pypi.md
+include pyproject.toml
+include build_release.py
+
+# 每个模块旁的双语文档（文档跟着代码走）随源码包分发，便于离线查阅。
+# 它们不进 wheel —— wheel 只装可运行代码，见 pyproject 的 package-data。
+recursive-include malight *.md
+recursive-include malight py.typed
+# 包内资源目录 malight/assets/：效果预览图（assets/images/*.png，模块文档里
+# 相对引用，不进 sdist 就是裂图）与字体目录说明（assets/fonts/README.md）。
+# 图片同时随 wheel 分发（见 pyproject 的 package-data）；用户放进 fonts/ 的
+# 字体文件是各人自己的资产，不主动打包。
+recursive-include malight *.png
+
+# 文档生成器与翻译表：保证从 sdist 也能重新生成文档
+recursive-include tools *.py
+
+recursive-include examples *.py
+prune examples/output
+prune malight.egg-info
+global-exclude __pycache__ *.py[cod]
