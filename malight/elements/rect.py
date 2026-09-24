@@ -16,11 +16,11 @@ if __name__ == "__main__" and not __package__:
         _os.path.abspath(__file__)))))
     __package__ = "malight.elements"
 
-from .base import Element, _paint, _fmt_points, _fmt_transform, _Self
+from .base import Element, _paint, _fmt_points, _fmt_transform
 from ..svg_backend import SvgNode, fmt_num
 
 
-class RectElement(Element):
+class RectElement(Element["RectElement"]):
     """
     矩形元素（对应中文版 `矩形元素`）。 / Rectangle element.
 
@@ -60,6 +60,62 @@ class RectElement(Element):
         w = float(self.node.attribs.get("width", 0))
         h = float(self.node.attribs.get("height", 0))
         return (x, y, x + w, y + h)
+
+    # ------------------------------------------------------------------
+    # 参数访问器（显式方法，与动态合成的 set_/get_ 等价）。 / Parameter accessors, written out explicitly; identical to the
+    # 展开成真实方法是为了让 IDE 能补全、拼错能报错。 / dynamically synthesized set_/get_. Real methods so the IDE completes them and flags typos.
+    # 本区块由 tools/gen_attr_accessors.py 依 _update_attrs 生成。 / Generated from the _update_attrs signature by tools/gen_attr_accessors.py.
+    # 手改会被 `python tools/gen_attr_accessors.py --check` 判为不同步。 / Hand edits make that check report it as out of sync.
+    # ------------------------------------------------------------------
+    # >>> gen_attr_accessors: begin (generated, do not edit by hand)
+    def set_x(self, value) -> "RectElement":
+        """设置 x（等价 ``update(x=value)``）。 / Set x; the same as ``update(x=value)``."""
+        return self.update(x=value)
+
+    def get_x(self) -> object:
+        """读取 x 的当前属性值。 / Read the current raw x attribute."""
+        return self._get_attr_value("x")
+
+    def set_y(self, value) -> "RectElement":
+        """设置 y（等价 ``update(y=value)``）。 / Set y; the same as ``update(y=value)``."""
+        return self.update(y=value)
+
+    def get_y(self) -> object:
+        """读取 y 的当前属性值。 / Read the current raw y attribute."""
+        return self._get_attr_value("y")
+
+    def set_width(self, value) -> "RectElement":
+        """设置 width（等价 ``update(width=value)``）。 / Set width; the same as ``update(width=value)``."""
+        return self.update(width=value)
+
+    def get_width(self) -> object:
+        """读取 width 的当前属性值。 / Read the current raw width attribute."""
+        return self._get_attr_value("width")
+
+    def set_height(self, value) -> "RectElement":
+        """设置 height（等价 ``update(height=value)``）。 / Set height; the same as ``update(height=value)``."""
+        return self.update(height=value)
+
+    def get_height(self) -> object:
+        """读取 height 的当前属性值。 / Read the current raw height attribute."""
+        return self._get_attr_value("height")
+
+    def set_corner_radius(self, value) -> "RectElement":
+        """设置 corner_radius（等价 ``update(corner_radius=value)``）。 / Set corner_radius; the same as ``update(corner_radius=value)``."""
+        return self.update(corner_radius=value)
+
+    def get_corner_radius(self) -> object:
+        """读取 corner_radius 的当前属性值。 / Read the current raw corner_radius attribute."""
+        return self._get_attr_value("corner_radius")
+
+    def set_rotate(self, value) -> "RectElement":
+        """设置 rotate（等价 ``update(rotate=value)``）。 / Set rotate; the same as ``update(rotate=value)``."""
+        return self.update(rotate=value)
+
+    def get_rotate(self) -> object:
+        """读取 rotate 的当前属性值。 / Read the current raw rotate attribute."""
+        return self._get_attr_value("rotate")
+    # <<< gen_attr_accessors: end
 
 # ===========================================================================
 # 使用示例

@@ -68,7 +68,6 @@ Path element.
 | `print_points()` | Print the path report so you can see how many points a curve has and where they sit. |
 | `show_points(board=None, **kw)` | Draw anchors as squares and handles as lines with round dots, just like a pen tool. |
 | `smooth(tightness=1.0)` | Smooth the polyline vertices into a Bézier curve. |
-| `update(**kw)` | Update the path's style attributes. |
 
 ---
 
@@ -176,10 +175,16 @@ if __name__ == "__main__":
         print("boolean ops need an optional dependency, skipping:", type(exc).__name__)
 
     pen.finish()
+
+# ---------------------------------------------------------------------------
+# Bottom import: show_points()'s return annotation names GroupElement, which subclasses
+# the Element defined here - a top-level import would cycle; the bottom solves both.
+# ---------------------------------------------------------------------------
+from .group import GroupElement  # noqa: E402
 ```
 
 ---
 
 ## Sibling modules
 
-[base](base.en.md) ｜ [circle](circle.en.md) ｜ [clippath](clippath.en.md) ｜ [ellipse](ellipse.en.md) ｜ [group](group.en.md) ｜ [image](image.en.md) ｜ [line](line.en.md) ｜ [link](link.en.md) ｜ [marker](marker.en.md) ｜ [mask](mask.en.md) ｜ [pattern](pattern.en.md) ｜ [polygon](polygon.en.md) ｜ [polyline](polyline.en.md) ｜ [rect](rect.en.md) ｜ [svgimage](svgimage.en.md) ｜ [symbol](symbol.en.md) ｜ [text](text.en.md) ｜ [textpath](textpath.en.md) ｜ [use](use.en.md)
+[base](base.en.md) ｜ [circle](circle.en.md) ｜ [clippath](clippath.en.md) ｜ [ellipse](ellipse.en.md) ｜ [group](group.en.md) ｜ [image](image.en.md) ｜ [line](line.en.md) ｜ [link](link.en.md) ｜ [marker](marker.en.md) ｜ [mask](mask.en.md) ｜ [pattern](pattern.en.md) ｜ [polygon](polygon.en.md) ｜ [polyline](polyline.en.md) ｜ [rect](rect.en.md) ｜ [svggroup](svggroup.en.md) ｜ [svgimage](svgimage.en.md) ｜ [symbol](symbol.en.md) ｜ [text](text.en.md) ｜ [textpath](textpath.en.md) ｜ [use](use.en.md)

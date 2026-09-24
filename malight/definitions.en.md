@@ -43,7 +43,7 @@ pen.text(100, 100, "Heading", font=Font.SIMHEI, weight=FontWeight.BOLD)
 pen.polygon(pts, fill_color=ColorName.TEAL, fill_rule=FillRule.EVENODD)
 pen.line((0, 0), (100, 0), stroke_style=DashStyle.DASHED)
 
-print(Color.RED)                 # "red" (all 140 named colours)
+print(Color.RED)                 # "#ff0000" (138 named colours plus the 2 no-colour constants)
 print(ColorName.RED)             # "red" (the common subset, as an enum)
 print(Color.RGB(30, 144, 255))   # "#1e90ff"
 print(Color.darken("#D75D72"))   # darken a colour
@@ -187,6 +187,14 @@ PDF export engines.
 ### `PNGMode`
 
 PNG export engines.
+
+### `FontEmbed`
+
+How a font FILE passed to `font=` is written into the SVG.
+
+### `ImageEmbed`
+
+How a local bitmap passed to `image()` is written into the SVG.
 
 ### `DOCXMode`
 

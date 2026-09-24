@@ -21,7 +21,7 @@ TextMixin - text: SVG text, textPath and text-to-path conversion.
 |---|---|
 | `text(x, y, text, font=SystemFont.…, font_size=16, fill_color=Color.BLACK, stroke_color=None, stroke_width=None, bold=False, italic=False, underline=False, weight=None, decoration=None, letter_spacing=None, word_spacing=None, h_align=None, v_align=None, char_rotate=None, text_length=None, length_adjust=None, paint_order=None, blend_mode=None, filter=None, opacity=None, id_=None, **extra)` | Write text. |
 | `textPath(points, text, start_offset='0%', font=SystemFont.…, font_size=16, fill_color=Color.BLACK, letter_spacing=None, weight=None, decoration=None, h_align=None, blend_mode=None, filter=None, id_=None, **extra)` | Lay text out along a path. |
-| `text_to_path(x, y, text, font=SystemFont.…, font_size=16, fill_color=Color.BLACK, letter_spacing=0, id_=None)` | Convert text into vector paths. |
+| `text_to_path(x, y, text, font=SystemFont.…, font_size=16, fill_color=Color.BLACK, letter_spacing=0, id_=None, **kw)` | Convert text into vector paths. |
 
 ---
 

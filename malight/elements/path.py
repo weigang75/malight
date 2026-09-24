@@ -23,7 +23,7 @@ if __name__ == "__main__" and not __package__:
 import math
 import re
 from ..svg_backend import SvgNode, fmt_num
-from .base import Element, _paint, _Self
+from .base import Element, _paint
 from ..i18n import t
 
 # 路径辅助工具（查看/拖动锚点与控制点）。
@@ -40,7 +40,7 @@ def _norm_deg(a):
     return a % 360.0
 
 
-class PathElement(Element):
+class PathElement(Element["PathElement"]):
     """
     路径元素（对应中文版 `路径元素`）。 / Path element.
 
@@ -62,9 +62,29 @@ class PathElement(Element):
         self._cur = (0.0, 0.0)    # 当前点
         self._start = (0.0, 0.0)  # 当前子路径起点（close 用）
         self._heading = 0.0       # 海龟朝向（度，0=向右，顺时针为正）
+        self._update_attrs(**kw)
+
+    def _update_attrs(self, d=None, **kw):
+        """
+        写入路径样式（内部方法）。 / Write the path style attributes (internal).
+
+        :param d: 直接给 SVG 路径串（等价 ``set_d``）；不传则保留命令式绘制的结果
+        :param kw: 填充/描边（``_apply_paint``）与公共样式（``_apply_common``）参数
+
+        与其它元素走同一条属性管线，因此
+        ``pen.path(..., opacity=0.5, blend_mode=..., class_name=...)``
+        在创建时同样生效 —— 英文版修正：以前这里只应用 fill/stroke 系列，
+        ``opacity`` / ``fill_opacity`` / ``stroke_opacity`` / ``blend_mode`` /
+        ``vector_effect`` / ``class_name`` / ``style_str`` / ``extra``
+        会被静默丢弃，``update()`` 的动态参数表也是空的。
+        """
         self._apply_common({"id_": kw.pop("id_", None)})
+        self._apply_common(kw)
         self._apply_paint(kw)
-        self.update(**{k: v for k, v in kw.items() if k in ("fill_color",)})
+        if d is not None:
+            self.set_d(d)
+        elif self._cmds:
+            self._sync()
 
     # ---------------------------------------------------------------
     # d 字符串
@@ -78,7 +98,7 @@ class PathElement(Element):
         """
         return " ".join(self._cmds)
 
-    def set_d(self, d) -> _Self:
+    def set_d(self, d) -> "PathElement":
         """
         直接设置 SVG path 的 d 字符串（英文版新增，对应原版 `原生path`）。 / Set the SVG path d string directly.
 
@@ -109,7 +129,7 @@ class PathElement(Element):
     # ---------------------------------------------------------------
     # 命令式绘制
     # ---------------------------------------------------------------
-    def move_to(self, x, y=None) -> _Self:
+    def move_to(self, x, y=None) -> "PathElement":
         """
         抬笔移动到指定点（不画线），并开启新子路径（对应中文版 `移动到`/`落笔`）。 / Lift the pen, move to a point without drawing, and start a new subpath.
 
@@ -130,7 +150,7 @@ class PathElement(Element):
     # 落笔与移动到等价（保留中文版双名语义）
     pen_down = move_to
 
-    def line_to(self, end_x, end_y=None) -> _Self:
+    def line_to(self, end_x, end_y=None) -> "PathElement":
         """
         从当前点画直线到目标点（对应中文版 `画直线`）。 / Draw a straight line from the current point to the target point.
 
@@ -151,17 +171,17 @@ class PathElement(Element):
         self._cmd(f"L{self._pt(end_x, end_y)}")
         return self
 
-    def h_line_to(self, end_x) -> _Self:
+    def h_line_to(self, end_x) -> "PathElement":
         """水平线到 end_x（对应中文版 `画水平线`）。 / Draw a horizontal line to end_x. 示例:: p.h_line_to(200)"""
         self.line_to(end_x, self._cur[1])
         return self
 
-    def v_line_to(self, end_y) -> _Self:
+    def v_line_to(self, end_y) -> "PathElement":
         """垂直线到 end_y（对应中文版 `画垂直线`）。 / Draw a vertical line to end_y. 示例:: p.v_line_to(200)"""
         self.line_to(self._cur[0], end_y)
         return self
 
-    def cubic_to(self, ctrl1, ctrl2, end) -> _Self:
+    def cubic_to(self, ctrl1, ctrl2, end) -> "PathElement":
         """
         三次贝塞尔曲线（对应中文版 `三次贝塞尔曲线`/`画曲线`）。 / Cubic Bézier curve.
 
@@ -177,7 +197,7 @@ class PathElement(Element):
         self._cmd(f"C{self._pt(*ctrl1)} {self._pt(*ctrl2)} {self._pt(*end)}")
         return self
 
-    def smooth_cubic_to(self, ctrl2, end) -> _Self:
+    def smooth_cubic_to(self, ctrl2, end) -> "PathElement":
         """
         平滑三次贝塞尔（自动反射前一控制点，对应中文版 `平滑曲线`）。 / Smooth cubic Bézier continuation.
 
@@ -189,7 +209,7 @@ class PathElement(Element):
         self._cmd(f"S{self._pt(*ctrl2)} {self._pt(*end)}")
         return self
 
-    def quad_to(self, ctrl, end) -> _Self:
+    def quad_to(self, ctrl, end) -> "PathElement":
         """
         二次贝塞尔曲线（对应中文版 `二次贝塞尔曲线`）。 / Quadratic Bézier curve.
 
@@ -201,14 +221,14 @@ class PathElement(Element):
         self._cmd(f"Q{self._pt(*ctrl)} {self._pt(*end)}")
         return self
 
-    def smooth_quad_to(self, end) -> _Self:
+    def smooth_quad_to(self, end) -> "PathElement":
         """平滑二次贝塞尔（对应中文版 `平滑的二次贝塞尔曲线`）。 / Smooth quadratic Bézier continuation. """
         self._cur = (float(end[0]), float(end[1]))
         self._cmd(f"T{self._pt(*end)}")
         return self
 
     def ellipse_arc_to(self, rx, ry, end, sweep=0, large_arc=False,
-                       x_axis_rotation=0) -> _Self:
+                       x_axis_rotation=0) -> "PathElement":
         """
         椭圆弧（对应中文版 `画椭圆弧`）。 / Elliptical arc.
 
@@ -228,7 +248,7 @@ class PathElement(Element):
                   f"{1 if large_arc else 0},{1 if sweep else 0} {self._pt(*end)}")
         return self
 
-    def arc_to(self, radius, end, sweep=0, large_arc=False) -> _Self:
+    def arc_to(self, radius, end, sweep=0, large_arc=False) -> "PathElement":
         """
         圆弧（对应中文版 `画圆弧`）。 / Circular arc.
 
@@ -243,7 +263,7 @@ class PathElement(Element):
         """
         return self.ellipse_arc_to(radius, radius, end, sweep, large_arc)
 
-    def circle_to(self, center, sweep=0) -> _Self:
+    def circle_to(self, center, sweep=0) -> "PathElement":
         """
         在路径中以圆弧画完整圆（对应中文版 `画圆`）。 / Draw a full circle in the path using arc commands.
 
@@ -267,7 +287,7 @@ class PathElement(Element):
         self._cur = self._start
         return self
 
-    def close(self) -> _Self:
+    def close(self) -> "PathElement":
         """
         闭合当前子路径（回到子路径起点，对应中文版 `闭合`）。 / Close the current subpath.
 
@@ -278,7 +298,7 @@ class PathElement(Element):
         self._cmd("Z")
         return self
 
-    def new_subpath(self, x=None, y=None, **kw) -> _Self:
+    def new_subpath(self, x=None, y=None, **kw) -> "PathElement":
         """
         开启新子路径（对应中文版 `新路径`）：同一元素里画不相连的多段。 / Start a new subpath so one element can hold several disconnected pieces.
 
@@ -299,7 +319,7 @@ class PathElement(Element):
         """当前朝向的弧度值（内部方法）。"""
         return math.radians(self._heading)
 
-    def forward(self, length) -> _Self:
+    def forward(self, length) -> "PathElement":
         """
         沿当前朝向前进并画线（对应中文版 `前进直线`）。 / Move forward along the current heading, drawing a line.
 
@@ -315,11 +335,11 @@ class PathElement(Element):
         dy = length * math.sin(self._heading_rad())
         return self.line_to(self._cur[0] + dx, self._cur[1] + dy)
 
-    def backward(self, length) -> _Self:
+    def backward(self, length) -> "PathElement":
         """沿当前朝向后退并画线（对应中文版 `后退直线`）。 / Move backwards along the current heading, drawing a line. 示例:: p.backward(50)"""
         return self.forward(-length)
 
-    def turn_right_move(self, angle, distance=0) -> _Self:
+    def turn_right_move(self, angle, distance=0) -> "PathElement":
         """
         右转 angle 度后移动（不画线）（对应中文版 `右转移动`）。 / Turn right by angle degrees and move without drawing.
 
@@ -335,11 +355,11 @@ class PathElement(Element):
             self._cmd(f"M{self._pt(*self._cur)}")
         return self
 
-    def turn_left_move(self, angle, distance=0) -> _Self:
+    def turn_left_move(self, angle, distance=0) -> "PathElement":
         """左转 angle 度后移动（对应中文版 `左转移动`）。 / Turn left by angle degrees and move without drawing. 示例:: p.turn_left_move(90)"""
         return self.turn_right_move(-angle, distance)
 
-    def turn_right_line(self, angle, length) -> _Self:
+    def turn_right_line(self, angle, length) -> "PathElement":
         """
         右转 angle 度后画线（对应中文版 `右转直线`）。 / Turn right by angle degrees and draw a line.
 
@@ -353,11 +373,11 @@ class PathElement(Element):
             self.forward(length)
         return self
 
-    def turn_left_line(self, angle, length) -> _Self:
+    def turn_left_line(self, angle, length) -> "PathElement":
         """左转 angle 度后画线（对应中文版 `左转直线`）。 / Turn left by angle degrees and draw a line. """
         return self.turn_right_line(-angle, length)
 
-    def turn_right_arc(self, angle, radius) -> _Self:
+    def turn_right_arc(self, angle, radius) -> "PathElement":
         """
         右转圆弧：画一段向右弯的弧线（对应中文版 `右转弧线`）。 / Turn-right arc: draw an arc curving to the right.
 
@@ -378,7 +398,7 @@ class PathElement(Element):
         end = (self._cur[0] + dx, self._cur[1] + dy)
         return self.arc_to(radius, end, sweep=1, large_arc=abs(angle) > 180)
 
-    def turn_left_arc(self, angle, radius) -> _Self:
+    def turn_left_arc(self, angle, radius) -> "PathElement":
         """左转圆弧（对应中文版 `左转弧线`）。 / Turn-left arc. 示例:: p.turn_left_arc(90, 40)"""
         self._heading = _norm_deg(self._heading - angle)
         chord = 2 * radius * math.sin(math.radians(abs(angle)) / 2)
@@ -387,7 +407,7 @@ class PathElement(Element):
         end = (self._cur[0] + dx, self._cur[1] + dy)
         return self.arc_to(radius, end, sweep=0, large_arc=abs(angle) > 180)
 
-    def fillet(self, p1, p2, radius) -> _Self:
+    def fillet(self, p1, p2, radius) -> "PathElement":
         """
         两线段之间倒圆角（对应中文版 `倒圆角直线`）：
         从当前点经 p1 拐向 p2，拐角处以 radius 圆弧过渡。 / Round the corner between two segments: go from the current point through p1 towards p2 with an arc of radius.
@@ -429,7 +449,7 @@ class PathElement(Element):
                             self.get_d())
         return tokens
 
-    def translate_cmds(self, dx, dy) -> _Self:
+    def translate_cmds(self, dx, dy) -> "PathElement":
         """
         平移路径的所有坐标点（对应中文版 `坐标平移`，直接改坐标而非 transform）。 / Translate every coordinate of the path.
 
@@ -485,7 +505,7 @@ class PathElement(Element):
         self.set_d(" ".join(out))
         return self
 
-    def reverse(self) -> _Self:
+    def reverse(self) -> "PathElement":
         """
         反转路径方向（对应中文版 `反向路径`）：起终点互换，形状不变。 / Reverse the path direction, swapping start and end while keeping the shape.
 
@@ -497,7 +517,7 @@ class PathElement(Element):
         self.editor(refresh=True).reverse()
         return self
 
-    def merge(self, other) -> _Self:
+    def merge(self, other) -> "PathElement":
         """
         合并另一条路径到本路径（对应中文版 `合并路径`）。 / Merge another path into this one.
 
@@ -712,7 +732,7 @@ class PathElement(Element):
         """
         return [c.pos for c in self.controls()]
 
-    def move_anchor(self, index, x, y) -> _Self:
+    def move_anchor(self, index, x, y) -> "PathElement":
         """
         移动第 index 个锚点（改完立即生效）。 / Move the anchor at index and apply it immediately.
 
@@ -726,7 +746,7 @@ class PathElement(Element):
         self.editor().move_anchor(index, x, y)
         return self
 
-    def move_control(self, seg_index, ctrl_index, x, y) -> _Self:
+    def move_control(self, seg_index, ctrl_index, x, y) -> "PathElement":
         """
         移动「第 seg_index 段」的第 ctrl_index 个调整点（改完立即生效）。 / Move control point ctrl_index of segment seg_index and apply it immediately.
 
@@ -760,7 +780,7 @@ class PathElement(Element):
         """
         return self.editor().print_report()
 
-    def show_points(self, board=None, **kw) -> "Element":
+    def show_points(self, board=None, **kw) -> "GroupElement":
         """
         在画布上画出锚点（方块）与调整杆（线 + 圆点），像钢笔工具一样。 / Draw anchors as squares and handles as lines with round dots, just like a pen tool.
 
@@ -774,7 +794,7 @@ class PathElement(Element):
         """
         return self.editor().show(board=board, **kw)
 
-    def smooth(self, tightness=1.0) -> _Self:
+    def smooth(self, tightness=1.0) -> "PathElement":
         """
         把路径中的折线顶点平滑为贝塞尔曲线（Catmull-Rom 转样条，
         对应中文版 `平滑路径`）。 / Smooth the polyline vertices into a Bézier curve.
@@ -820,7 +840,24 @@ class PathElement(Element):
     # ---------------------------------------------------------------
     # 内部辅助
     # ---------------------------------------------------------------
-    def _copy_paint_from(self, other) -> _Self:
+    def _copy_mutable_state(self, other):
+        """
+        克隆时各复制一份命令列表（内部方法）。
+
+        ``clone`` 是浅拷贝，不这么做的话克隆体和原路径会**共用** ``_cmds``：
+        之后往任一条上继续画，另一条的 ``d`` 也会跟着变。
+
+        示例（内部）::
+
+            twin = p.clone(); twin.line_to(300, 200)   # 原路径 p 不受影响
+        """
+        other._cmds = list(self._cmds)
+        other._cur = self._cur
+        other._start = self._start
+        other._heading = self._heading
+        other._editor = None      # 编辑器绑定在原元素上，克隆体按需重建
+
+    def _copy_paint_from(self, other) -> "PathElement":
         """
         复制另一元素的填充/描边样式到本路径（内部方法）。
 
@@ -831,17 +868,6 @@ class PathElement(Element):
                   "stroke-linecap", "stroke-linejoin", "fill-rule", "opacity"):
             if k in other.node.attribs:
                 self.node.set(k, other.node.attribs[k])
-        return self
-
-    def update(self, **kw) -> _Self:
-        """
-        更新路径样式属性。 / Update the path's style attributes.
-
-        示例::
-            p.update(stroke_color="red", stroke_width=5, fill_rule="evenodd")
-        """
-        self._apply_common(kw)
-        self._apply_paint(kw)
         return self
 
 # ===========================================================================
@@ -949,3 +975,9 @@ if __name__ == "__main__":
         print("布尔运算需要可选依赖，跳过: / boolean ops need an optional dependency, skipping:", type(exc).__name__)
 
     pen.finish()
+
+# ---------------------------------------------------------------------------
+# 底部导入：show_points() 的返回注解引用 GroupElement，而 group.py 又继承本模块 / Bottom import: show_points()'s return annotation names GroupElement, which subclasses
+# 的 Element —— 顶部互相导入会循环；放到文件末尾两个问题都解决。 / the Element defined here - a top-level import would cycle; the bottom solves both.
+# ---------------------------------------------------------------------------
+from .group import GroupElement  # noqa: E402

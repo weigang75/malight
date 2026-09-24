@@ -16,10 +16,10 @@ if __name__ == "__main__" and not __package__:
         _os.path.abspath(__file__)))))
     __package__ = "malight.elements"
 
-from .base import Element, _paint, _fmt_points, _fmt_transform, _Self
+from .base import Element, _paint, _fmt_points, _fmt_transform
 
 
-class PatternElement(Element):
+class PatternElement(Element["PatternElement"]):
     """
     图案元素（<pattern>，对应中文版 `元素图案`）：平铺填充纹理。 / Pattern element: a tiling fill texture.
 
@@ -38,20 +38,77 @@ class PatternElement(Element):
         """写入 pattern 属性（内部方法）。"""
         self._apply_common({"id_": id_ or Element._next_id("pattern")})
         self._apply_common(kw)
+        self._apply_paint(kw)   # 填充/描边会被图案内容继承（英文版修正）
         self.node.set("x", x)
         self.node.set("y", y)
         self.node.set("width", width)
         self.node.set("height", height)
         self.node.set("patternUnits", units or "userSpaceOnUse")
 
-    def add_element(self, el) -> _Self:
+    def add_element(self, el) -> "PatternElement":
         """把元素加入图案内容。 / Add a shape to the pattern content. 示例:: p.add_element(shape)"""
         el.change_group(self)
         return self
 
-    def append(self, el) -> _Self:
+    def append(self, el) -> "PatternElement":
         """add_element 的别名。 / Alias of add_element. """
         return self.add_element(el)
+
+    # ------------------------------------------------------------------
+    # 参数访问器（显式方法，与动态合成的 set_/get_ 等价）。 / Parameter accessors, written out explicitly; identical to the
+    # 展开成真实方法是为了让 IDE 能补全、拼错能报错。 / dynamically synthesized set_/get_. Real methods so the IDE completes them and flags typos.
+    # 本区块由 tools/gen_attr_accessors.py 依 _update_attrs 生成。 / Generated from the _update_attrs signature by tools/gen_attr_accessors.py.
+    # 手改会被 `python tools/gen_attr_accessors.py --check` 判为不同步。 / Hand edits make that check report it as out of sync.
+    # ------------------------------------------------------------------
+    # >>> gen_attr_accessors: begin (generated, do not edit by hand)
+    def set_x(self, value) -> "PatternElement":
+        """设置 x（等价 ``update(x=value)``）。 / Set x; the same as ``update(x=value)``."""
+        return self.update(x=value)
+
+    def get_x(self) -> object:
+        """读取 x 的当前属性值。 / Read the current raw x attribute."""
+        return self._get_attr_value("x")
+
+    def set_y(self, value) -> "PatternElement":
+        """设置 y（等价 ``update(y=value)``）。 / Set y; the same as ``update(y=value)``."""
+        return self.update(y=value)
+
+    def get_y(self) -> object:
+        """读取 y 的当前属性值。 / Read the current raw y attribute."""
+        return self._get_attr_value("y")
+
+    def set_width(self, value) -> "PatternElement":
+        """设置 width（等价 ``update(width=value)``）。 / Set width; the same as ``update(width=value)``."""
+        return self.update(width=value)
+
+    def get_width(self) -> object:
+        """读取 width 的当前属性值。 / Read the current raw width attribute."""
+        return self._get_attr_value("width")
+
+    def set_height(self, value) -> "PatternElement":
+        """设置 height（等价 ``update(height=value)``）。 / Set height; the same as ``update(height=value)``."""
+        return self.update(height=value)
+
+    def get_height(self) -> object:
+        """读取 height 的当前属性值。 / Read the current raw height attribute."""
+        return self._get_attr_value("height")
+
+    def set_id_(self, value) -> "PatternElement":
+        """设置 id_（等价 ``update(id_=value)``）。 / Set id_; the same as ``update(id_=value)``."""
+        return self.update(id_=value)
+
+    def get_id_(self) -> object:
+        """读取 id_ 的当前属性值。 / Read the current raw id_ attribute."""
+        return self._get_attr_value("id_")
+
+    def set_units(self, value) -> "PatternElement":
+        """设置 units（等价 ``update(units=value)``）。 / Set units; the same as ``update(units=value)``."""
+        return self.update(units=value)
+
+    def get_units(self) -> object:
+        """读取 units 的当前属性值。 / Read the current raw units attribute."""
+        return self._get_attr_value("units")
+    # <<< gen_attr_accessors: end
 
 # ===========================================================================
 # 使用示例

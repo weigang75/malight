@@ -367,8 +367,13 @@ def verify_wheel():
             "assert not _md, 'wheel 里混进了文档: %r' % _md[:5]\n"
             "print('wheel excludes module docs (.md) as intended')\n"
         )
+        # 中文 Windows 上子进程默认按 GBK 写管道、父进程按 ANSI 解码，自检输出
+        # 里的中文会把读取线程炸成 UnicodeDecodeError -> stdout 为空 -> IndexError。
+        # 两侧都钉死 UTF-8：子进程 PYTHONIOENCODING + 父进程 encoding/errors。
+        env = dict(os.environ, PYTHONIOENCODING="utf-8")
         r = subprocess.run([py, "-c", test], capture_output=True,
-                           text=True, cwd=tmp)
+                           text=True, encoding="utf-8", errors="replace",
+                           cwd=tmp, env=env)
         if r.returncode != 0:
             print(r.stdout); print(r.stderr)
             raise SystemExit("自检失败：安装后的 malight 无法正常绘图")

@@ -17,10 +17,10 @@ if __name__ == "__main__" and not __package__:
     __package__ = "malight.elements"
 
 from ..definitions import value_of
-from .base import Element, _paint, _fmt_points, _fmt_transform, _Self
+from .base import Element, _paint, _fmt_points, _fmt_transform
 
 
-class MarkerElement(Element):
+class MarkerElement(Element["MarkerElement"]):
     """
     标记元素（<marker>，对应中文版 `标记元素`）：定义箭头等线端装饰。 / Marker element defining line-end decorations such as arrowheads.
 
@@ -54,10 +54,74 @@ class MarkerElement(Element):
             self.node.set("markerUnits", value_of(marker_units))
         self._apply_paint(kw)
 
-    def add_element(self, el) -> _Self:
+    def add_element(self, el) -> "MarkerElement":
         """把图形加入 marker 内容。 / Add a shape to the marker content. """
         el.change_group(self)
         return self
+
+    # ------------------------------------------------------------------
+    # 参数访问器（显式方法，与动态合成的 set_/get_ 等价）。 / Parameter accessors, written out explicitly; identical to the
+    # 展开成真实方法是为了让 IDE 能补全、拼错能报错。 / dynamically synthesized set_/get_. Real methods so the IDE completes them and flags typos.
+    # 本区块由 tools/gen_attr_accessors.py 依 _update_attrs 生成。 / Generated from the _update_attrs signature by tools/gen_attr_accessors.py.
+    # 手改会被 `python tools/gen_attr_accessors.py --check` 判为不同步。 / Hand edits make that check report it as out of sync.
+    # ------------------------------------------------------------------
+    # >>> gen_attr_accessors: begin (generated, do not edit by hand)
+    def set_id_(self, value) -> "MarkerElement":
+        """设置 id_（等价 ``update(id_=value)``）。 / Set id_; the same as ``update(id_=value)``."""
+        return self.update(id_=value)
+
+    def get_id_(self) -> object:
+        """读取 id_ 的当前属性值。 / Read the current raw id_ attribute."""
+        return self._get_attr_value("id_")
+
+    def set_ref_x(self, value) -> "MarkerElement":
+        """设置 ref_x（等价 ``update(ref_x=value)``）。 / Set ref_x; the same as ``update(ref_x=value)``."""
+        return self.update(ref_x=value)
+
+    def get_ref_x(self) -> object:
+        """读取 ref_x 的当前属性值。 / Read the current raw ref_x attribute."""
+        return self._get_attr_value("ref_x")
+
+    def set_ref_y(self, value) -> "MarkerElement":
+        """设置 ref_y（等价 ``update(ref_y=value)``）。 / Set ref_y; the same as ``update(ref_y=value)``."""
+        return self.update(ref_y=value)
+
+    def get_ref_y(self) -> object:
+        """读取 ref_y 的当前属性值。 / Read the current raw ref_y attribute."""
+        return self._get_attr_value("ref_y")
+
+    def set_marker_width(self, value) -> "MarkerElement":
+        """设置 marker_width（等价 ``update(marker_width=value)``）。 / Set marker_width; the same as ``update(marker_width=value)``."""
+        return self.update(marker_width=value)
+
+    def get_marker_width(self) -> object:
+        """读取 marker_width 的当前属性值。 / Read the current raw marker_width attribute."""
+        return self._get_attr_value("marker_width")
+
+    def set_marker_height(self, value) -> "MarkerElement":
+        """设置 marker_height（等价 ``update(marker_height=value)``）。 / Set marker_height; the same as ``update(marker_height=value)``."""
+        return self.update(marker_height=value)
+
+    def get_marker_height(self) -> object:
+        """读取 marker_height 的当前属性值。 / Read the current raw marker_height attribute."""
+        return self._get_attr_value("marker_height")
+
+    def set_orient(self, value) -> "MarkerElement":
+        """设置 orient（等价 ``update(orient=value)``）。 / Set orient; the same as ``update(orient=value)``."""
+        return self.update(orient=value)
+
+    def get_orient(self) -> object:
+        """读取 orient 的当前属性值。 / Read the current raw orient attribute."""
+        return self._get_attr_value("orient")
+
+    def set_marker_units(self, value) -> "MarkerElement":
+        """设置 marker_units（等价 ``update(marker_units=value)``）。 / Set marker_units; the same as ``update(marker_units=value)``."""
+        return self.update(marker_units=value)
+
+    def get_marker_units(self) -> object:
+        """读取 marker_units 的当前属性值。 / Read the current raw marker_units attribute."""
+        return self._get_attr_value("marker_units")
+    # <<< gen_attr_accessors: end
 
 # ===========================================================================
 # 使用示例

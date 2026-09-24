@@ -15,6 +15,7 @@
     6. 文档链路：gen_docs.py --check（模块双语文档与源码同步）、
        bilingualize_code.py --check（示例注释/文案是否都配了英文）、
        body_en.py（英文正文译文表指纹）、pypi_readme.py --check（PyPI 说明页）、
+       gen_color_constants.py --check（Color 常量与 _COLOR_TABLE 同步）、
        英文页无中文、相对链接全部有效；
     7. i18n 自检：默认英文、切中文、环境变量、缺词兜底；
     8. SMIL 动画参数合法性（``check_smil.py``）：``calcMode="spline"`` 的
@@ -600,6 +601,240 @@ print("滤镜链不断链：%d 个效果 x 4 条叠加路径全部通过" % len(
     rep.add("滤镜", "效果叠加后链上无悬空 result", ok, out, sec)
 
 
+def check_element_attrs(rep):
+    """
+    创建元素时传的样式参数必须真的写进 SVG（`tools/check_element_attrs.py`）。
+
+    这条是用户报出来的：``pen.path(stroke_color=..., opacity=0.5,
+    stroke_join=...)`` 里 ``opacity`` 没生效 —— ``PathElement`` 当时没走
+    ``_update_attrs`` 属性管线，``opacity`` / ``fill_opacity`` /
+    ``blend_mode`` / ``class_name`` 等一批公共样式参数被静默丢弃，
+    ``pen.symbol(opacity=...)`` / ``pen.mask(opacity=...)`` 更是直接
+    ``TypeError``。静默丢参在 IDE 里毫无提示，只能逐个入口实测。
+
+    检查器遍历 33 个板级绘图入口，逐个传标准样式参数并核对节点属性。
+    """
+    tool = os.path.join(HERE, "check_element_attrs.py")
+    ok, tail, sec = run_py([tool, "--quiet"], ROOT)
+    rep.add("元素", "创建时的样式参数全部落到 SVG（33 个入口）", ok, tail, sec)
+
+
+def check_clone_isolation(rep, tmp):
+    """
+    克隆出来的元素必须和原元素互不干扰（内部状态不能被共用）。
+
+    这条也是「静默错效」家族的：``Element.clone`` 走的是浅拷贝，
+    ``PathElement._cmds`` 这类列表会被两条路径共用 —— 克隆之后往任一条上
+    继续画（``line_to`` 等），另一条的 ``d`` 会跟着改变，而界面上一点报错
+    都没有。修法是 ``_copy_mutable_state``：子类把可变状态各复制一份。
+    """
+    src = '''
+from malight import Malight
+
+pen = Malight("_clone_iso", width=400, height=300)
+
+# 路径：克隆后各自继续画，d 不能互相污染
+a = pen.path(stroke_color="red", opacity=0.5)
+a.move_to(0, 0); a.line_to(10, 10)
+b = pen.copy(a)
+b.line_to(50, 50)
+a.line_to(90, 90)
+assert a.node.attribs["d"] == "M0,0 L10,10 L90,90", a.node.attribs["d"]
+assert b.node.attribs["d"] == "M0,0 L10,10 L50,50", b.node.attribs["d"]
+assert a._cmds is not b._cmds, "克隆体与原路径共用命令列表"
+
+# 克隆体的属性改动不能影响原元素（节点对象独立）
+c = pen.circle(50, 50, 20, fill_color="navy", opacity=0.4)
+navy = c.node.attribs["fill"]
+d = c.clone()
+d.update(fill_color="red", opacity=0.9)
+assert c.node.attribs["fill"] == navy, c.node.attribs["fill"]
+assert c.node.attribs["opacity"] == 0.4, c.node.attribs["opacity"]
+assert d.node.attribs["opacity"] == 0.9, d.node.attribs["opacity"]
+assert d.node is not c.node, "克隆体和原元素共用同一个节点"
+print("克隆隔离通过：path 命令列表 / 元素属性均独立")
+'''
+    ok, out, sec = run_py(["-c", src], tmp)
+    rep.add("元素", "克隆体与原元素内部状态互不共用", ok, out, sec)
+
+
+def check_chain_typing(rep):
+    """
+    链式方法的返回类型必须是**具体元素类**（`tools/check_chain_typing.py`）。
+
+    这条是用户报出来的：`pen.path(...).move_to(...).` 在 PyCharm 里点出来的
+    全是 Element 的方法 —— 标注只写 `-> _Self`（模块级 TypeVar，bound=Element）
+    时，PyCharm 只按上界推导，子类自己的方法一个都补不到。
+
+    固化下来的三条硬规则：基类 `Element(Generic[_Self])` + `-> _Self` 的方法
+    写 `self: _Self`；子类声明 `Element["XElement"]`；子类自己 `return self`
+    的方法返回标注必须是本类名。用 ``--no-mypy`` 只做静态检查（依赖无关），
+    人工可去掉该参数让 mypy 实测一遍 reveal_type。
+    """
+    tool = os.path.join(HERE, "check_chain_typing.py")
+    ok, tail, sec = run_py([tool, "--no-mypy"], ROOT)
+    rep.add("元素", "链式方法返回具体元素类（19 子类 + 基类泛型）", ok, tail, sec)
+
+
+def check_attr_accessors(rep):
+    """
+    元素参数访问器必须**是真实方法**（`tools/gen_attr_accessors.py`）。
+
+    用户报的「PyCharm 无法识别」有两处：`Color.BLACK` 那批常量是一处，元素参数
+    访问器是第二处 —— `circle.set_radius(` / `t.set_font_size(` 原来是
+    `Element.__getattr__` 按 `_attr_params` 动态合成的，IDE 补不出来，而文档
+    恰恰在推荐这种链式写法（`t.set_font_size(36).set_fill_color("teal")`）。
+
+    17 个元素类共 144 个访问器已展开成类体内的显式方法。这条检查做两件事：
+    生成块与 `_update_attrs` 同步（静态），以及运行时**名字真的在某个类的
+    ``__dict__`` 里** —— 后者防的是名字写错、缩进串了类，静态比对却放过。
+    """
+    tool = os.path.join(HERE, "gen_attr_accessors.py")
+    ok, tail, sec = run_py([tool, "--check"], ROOT)
+    rep.add("元素", "参数访问器是真实方法（144 个，IDE 可见）", ok, tail, sec)
+
+
+def check_svg_text_edit(rep, tmp):
+    """
+    SVG 图元素能直接改**自己那份文本**（`pen.svg_image` + 换色方法）。
+
+    这条是用户要的：``circle_pattern = pen.image("xx.svg", ...)`` 只是把 SVG
+    当图片贴上去，文本锁在 base64 里改不了；同一个文件想要几种配色，就得复制
+    几个文件。`svg_image()` 把源文本读进元素缓存，`replace_text` /
+    `replace_color` 改的都是这一份，改完自动重新内嵌。
+
+    端到端跑一遍：4 种白色写法（``#ffffff`` / ``white`` / ``rgba(...)`` /
+    ``#FFF``）一次全换掉，而 ``id="orange"`` 这种同名标识与 ``<text>white</text>``
+    正文不动；换色后再 ``update(width=...)``（局部更新）不能把文本冲回原样；
+    同一个文件贴两次各改各的、互不影响；旧名 ``paste_svg`` 仍返回同一类。
+
+    **换色只挂在这一条通道上**，因为它自带一份文本。导入成组 / 模板拿到的是
+    节点树（`pen.import_svg_as_group` → `SvgGroupElement`），对象上**没有**
+    换色方法，改色走 tools 函数 ``replace_svg_node_color(元素.node, ...)``；
+    `SvgNode` 本身也只剩树操作（walk / to_xml / add / set / find），不再有
+    replace_color —— 用户指出「Group 硬上换色方法」正是这个设计问题：颜色是
+    图形的属性，不是「组」这个容器的性质。
+
+    导入通道要验的是「它就是普通组」：类型是 SvgGroupElement、能 translate、
+    bbox 跟着动，而换色要经 tools 函数（颜色属性 / ``style`` / ``<style>``
+    块里 class 写的颜色一起换，模板改一处则所有 ``<use>`` 实例一起变）。
+    """
+    src = '''
+from malight import GroupElement, ImageElement, Malight
+from malight.elements.svgimage import SVGImageElement
+from malight.elements.svggroup import SvgGroupElement
+from malight.tools import (replace_svg_color, svg_colors, svg_intrinsic_size,
+                           svg_text_to_data_uri, read_svg_text,
+                           replace_svg_node_color, replace_svg_node_text,
+                           svg_node_colors, walk_svg_nodes)
+import base64, os, tempfile
+
+SRC = """<svg xmlns="http://www.w3.org/2000/svg" width="120" height="80">
+  <circle cx="60" cy="40" r="30" fill="#ffffff" stroke="white"/>
+  <rect width="10" height="10" id="orange" fill="rgba(255,255,255,0.5)"/>
+  <text x="10" y="70">white</text>
+  <g style="fill:#FFF"><path d="M0 0h5"/></g>
+</svg>"""
+d = tempfile.mkdtemp()
+p = os.path.join(d, "circle-pattern-01.svg")
+open(p, "w", encoding="utf-8", newline="").write(SRC)
+assert read_svg_text(p) == SRC
+assert svg_text_to_data_uri("<svg/>").startswith("data:image/svg+xml;base64,")
+
+# 1) 工具层：写法互认、不误伤、认不出就别乱换
+assert svg_colors(SRC) == ["#ffffff"], svg_colors(SRC)
+text, n = replace_svg_color(SRC, "白色", "#ff0000")
+assert n == 4, n
+assert text.replace(">white<", "").count("white") == 0, text
+assert 'id="orange"' in text and ">white<" in text
+assert replace_svg_color(SRC, "rgb(255,255,255)", "#00ff00")[1] == 4
+assert replace_svg_color(SRC, "url(#fff)", "#000000")[1] == 0
+assert replace_svg_color(SRC, "红", "#000000")[1] == 0
+try:
+    replace_svg_color(SRC, "#ffffff", "nonsense")
+    raise AssertionError("新颜色认不出时应当报错")
+except ValueError:
+    pass
+assert svg_intrinsic_size(SRC) == (120.0, 80.0)
+
+# 2) 元素层：svg_image() -> 只给宽按比例算高 -> 换色 -> 局部更新不冲掉文本
+pen = Malight("_svgtext", width=400, height=300)
+icon = pen.svg_image(p, x=10, y=10, width=60)
+assert isinstance(icon, SVGImageElement), type(icon)
+assert icon.node.attribs["height"] == 40.0, icon.node.attribs["height"]
+assert icon.svg_colors() == ["#ffffff"]
+icon.replace_color("#ffffff", "#ff0000")
+icon.update(width=120)                       # 局部更新不能把改过的文本冲回原样
+raw = icon.node.attribs["href"].split("base64,", 1)[1]
+cur = base64.b64decode(raw).decode("utf-8")
+assert "#ff0000" in cur and "#ffffff" not in cur, cur
+assert cur.replace(">white<", "").count("white") == 0
+assert icon.node.attribs["width"] == 120
+assert icon.get_svg_text() == cur
+icon.replace_text("circle", "ellipse", warn=False)
+assert "<ellipse" in icon.get_svg_text() and "<circle" not in icon.get_svg_text()
+assert icon.set_svg_text(SRC) is icon and icon.svg_colors() == ["#ffffff"]
+
+# 3) 同一个文件贴两次各改各的；旧名 paste_svg 仍是同一类
+other = pen.svg_image(p, x=200, y=10, width=60)
+assert other.svg_colors() == ["#ffffff"]          # 第二个实例没被第一个影响
+other.replace_color("white", "#00a651")
+assert other.svg_colors() == ["#00a651"]
+assert icon.svg_colors() == ["#ffffff"]           # 各改各的
+assert isinstance(pen.paste_svg(p, 0, 200, 40), SVGImageElement)
+assert isinstance(pen.image(p, 0, 0, 40), ImageElement), "image() 仍是位图元素"
+
+# 4) 导入成组：拿到的是「组元素」（有组的全套能力），但对象上没有换色方法
+grp = pen.import_svg_as_group(p, x=10, y=200, scale=0.5)
+assert isinstance(grp, SvgGroupElement), type(grp)
+assert isinstance(grp, GroupElement), "导入的组与 pen.g() 同族"
+assert not hasattr(grp, "replace_color"), "换色只属于 svg_image 那条通道"
+assert not hasattr(grp, "svg_colors") and not hasattr(grp, "replace_text")
+assert not hasattr(grp.node, "replace_color"), "SvgNode 只剩树操作"
+assert not hasattr(grp.node, "svg_colors") and not hasattr(grp.node, "replace_text")
+assert [n.tag for n in walk_svg_nodes(grp.node)][:2] == ["g", "svg"]
+assert grp.elements() == [], "导入的节点没有元素对象"
+
+# 组的能力：bbox 按原始画布 + 变换算，translate 之后跟着动
+assert tuple(round(v, 1) for v in grp.bbox()) == (10.0, 200.0, 70.0, 240.0)
+grp.translate(5, 0)
+assert tuple(round(v, 1) for v in grp.bbox()) == (15.0, 200.0, 75.0, 240.0)
+
+# 换色走 tools 函数改节点属性
+assert svg_node_colors(grp.node) == ["#ffffff"], svg_node_colors(grp.node)
+assert replace_svg_node_color(grp.node, "白色", "#ff0000") == 4, "命中 4 处"
+assert svg_node_colors(grp.node) == ["#ff0000"]
+grp.update(y=210)                            # 局部更新不重解析、不冲掉改色
+assert svg_node_colors(grp.node) == ["#ff0000"]
+assert tuple(round(v, 1) for v in grp.bbox()) == (15.0, 210.0, 75.0, 250.0)
+xml = grp.node.to_xml(pretty=False)
+assert 'id="orange"' in xml and ">white<" in xml, "同名标识与文字正文不动"
+
+# 5) 模板：同样不带换色方法，改符号内容则所有 <use> 实例一起变
+tpl = pen.import_svg_as_symbol(p, id_="icon_tpl")
+assert not hasattr(tpl, "replace_color"), "模板也不挂换色方法"
+assert svg_node_colors(tpl.node) == ["#ffffff"]
+replace_svg_node_color(tpl.node, "white", "#1e90ff")
+assert svg_node_colors(grp.node) == ["#ff0000"], "组与模板各持一份节点树"
+pen.use("icon_tpl", x=200, y=200, width=80, height=54)
+assert replace_svg_node_color(grp.node, "红", "#000000") == 0, "旧色认不出就不动"
+try:
+    replace_svg_node_color(grp.node, "#ff0000", "nonsense")
+    raise AssertionError("新颜色认不出时应当报错")
+except ValueError:
+    pass
+assert replace_svg_node_text(grp.node, "circle", "ellipse") == 1
+assert "ellipse" in grp.node.to_xml(pretty=False)
+out = pen.finish()
+svg = open(out, encoding="utf-8").read()
+assert "#1e90ff" in svg and "#ff0000" in svg, "两种改色都要落进导出文件"
+print("SVG 文本换色通过：4 种写法一次全换、局部更新不冲文本、同文件多配色")
+print("SVG 组通道通过：SvgGroupElement 可变换 / 无换色方法 / tools 函数改色")
+'''
+    ok, out, sec = run_py(["-c", src], tmp)
+    rep.add("元素", "SVG 换色：图片通道（改文本）+ 导入节点通道", ok, out, sec)
+
+
 def check_i18n(rep, tmp):
     """默认英文、切中文、环境变量、区域码兜底、use_language 作用域。"""
     src = (
@@ -663,6 +898,35 @@ def check_docs(rep, tmp):
     rep.add("文档", "PyPI 说明页与 README.en.md 同步", ok, out, sec)
 
 
+def check_color_constants(rep):
+    """
+    `Color` 的 138 个颜色常量必须与 `_COLOR_TABLE` 同步（`tools/gen_color_constants.py`）。
+
+    这条是用户报出来的：``Color.BLACK`` / ``Color.WHITE`` 运行时能用，但在
+    PyCharm 里**无法识别** —— 常量原来是用一行 ``locals().update(...)``
+    动态写进类命名空间的，静态分析看不见：点不出来、拼错也不报错。
+    改成 138 行显式赋值后 IDE 立刻恢复，而颜色数据仍然只写在
+    ``_COLOR_TABLE`` 一处；本检查保证两边不会漂移。
+    """
+    tool = os.path.join(HERE, "gen_color_constants.py")
+    ok, tail, sec = run_py([tool, "--check"], ROOT)
+    rep.add("文档", "颜色常量与 _COLOR_TABLE 同步（138 个）", ok, tail, sec)
+
+
+def check_terminal_color(rep):
+    """
+    终端上色判定（`tools/check_terminal_color.py`）。
+
+    这条是用户报出来的：**PyCharm 里彩色消息全都没有颜色**。根因是判定只看
+    ``sys.stdout.isatty()``，而 IDE 的运行窗口把 stdout 接成管道、``isatty()``
+    恒为 False（窗口本身却会渲染 ANSI），于是加色分支根本不执行。
+    本检查真的起子进程、真的看输出里有没有 ``\\x1b[``，把 8 个场景逐一验证。
+    """
+    tool = os.path.join(HERE, "check_terminal_color.py")
+    ok, tail, sec = run_py([tool, "--quiet"], ROOT)
+    rep.add("文档", "终端上色判定（IDE 运行窗口 / 重定向 / 环境变量）", ok, tail, sec)
+
+
 def check_docs_text(rep):
     """英文页不得混入中文；所有相对链接都要能点开。"""
     cjk, links = [], []
@@ -715,7 +979,7 @@ def main(argv):
 
     print("=== malight 全量回归%s ===" % ("（--fast）" if fast else ""))
     print("解释器:", PY)
-    print("示例 %d 个 ｜ 测试 %d 个 ｜ 模块示例 %d 个 ｜ 静态检查：语法/行尾/占位符/遮蔽/双语对/滤镜/文档链路/多语言/网页编辑器/动画"
+    print("示例 %d 个 ｜ 测试 %d 个 ｜ 模块示例 %d 个 ｜ 静态检查：语法/行尾/占位符/遮蔽/双语对/滤镜/元素属性/文档链路/多语言/网页编辑器/动画"
           % (len(demos), len(tests), len(modules)))
     print("-" * 68)
 
@@ -729,7 +993,14 @@ def main(argv):
         check_bilingual_split(rep)
         check_fx_api(rep)
         check_fx_chain(rep, tmp)
+        check_element_attrs(rep)
+        check_clone_isolation(rep, tmp)
+        check_chain_typing(rep)
+        check_attr_accessors(rep)
+        check_svg_text_edit(rep, tmp)
         check_docs(rep, tmp)
+        check_color_constants(rep)
+        check_terminal_color(rep)
         check_docs_text(rep)
         check_i18n(rep, tmp)
         check_htmleditor(rep)

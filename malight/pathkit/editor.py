@@ -581,7 +581,7 @@ class PathEditor:
     # 可视化：在画布上把点画出来
     # ---------------------------------------------------------------
     def show(self, board=None, anchor_color="#e63946", control_color="#1d3557",
-             handle_color="#457b9d", size=4, labels=False, id_=None) -> "Element":
+             handle_color="#457b9d", size=4, labels=False, id_=None) -> "GroupElement":
         """
         在画布上把锚点与调整杆画出来（像钢笔工具那样），方便对照调整。 / Draw anchors and handles on the canvas, pen-tool style, so you can check and adjust them.
 
@@ -775,3 +775,12 @@ if __name__ == "__main__":
     ed.show(labels=True)
 
     pen.finish()
+
+# ---------------------------------------------------------------------------
+# 底部导入：show() 的返回注解引用 GroupElement。 / Bottom import: show()'s return annotation names GroupElement.
+# 顶部导入会把 elements 包拉起来，而 elements.path 又 import 本模块，形成循环。 / A top-level import would pull in the elements package while elements.path imports this module back, forming a cycle.
+# 放到文件末尾（PathEditor 已定义完毕）两个问题都解决。 / Moving it to the bottom of the file, after PathEditor is fully defined, solves both.
+# 注解必须能在运行时求值（examples/test_types.py 用 get_type_hints 逐个校验）。 / The annotation must be resolvable at runtime, since examples/test_types.py checks every one of them with get_type_hints.
+# 所以不能用 TYPE_CHECKING 守卫，与 elements/base.py 的底部导入同一范式。 / So no TYPE_CHECKING guard here - same pattern as the bottom imports in elements/base.py.
+# ---------------------------------------------------------------------------
+from ..elements.group import GroupElement  # noqa: E402

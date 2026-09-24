@@ -16,11 +16,11 @@ if __name__ == "__main__" and not __package__:
         _os.path.abspath(__file__)))))
     __package__ = "malight.elements"
 
-from .base import Element, _paint, _fmt_points, _fmt_transform, _Self
+from .base import Element, _paint, _fmt_points, _fmt_transform
 from ..svg_backend import SvgNode, fmt_num
 
 
-class EllipseElement(Element):
+class EllipseElement(Element["EllipseElement"]):
     """
     椭圆元素（对应中文版 `椭圆元素`）。 / Ellipse element.
 
@@ -56,6 +56,46 @@ class EllipseElement(Element):
         rx = float(self.node.attribs.get("rx", 0))
         ry = float(self.node.attribs.get("ry", 0))
         return (cx - rx, cy - ry, cx + rx, cy + ry)
+
+    # ------------------------------------------------------------------
+    # 参数访问器（显式方法，与动态合成的 set_/get_ 等价）。 / Parameter accessors, written out explicitly; identical to the
+    # 展开成真实方法是为了让 IDE 能补全、拼错能报错。 / dynamically synthesized set_/get_. Real methods so the IDE completes them and flags typos.
+    # 本区块由 tools/gen_attr_accessors.py 依 _update_attrs 生成。 / Generated from the _update_attrs signature by tools/gen_attr_accessors.py.
+    # 手改会被 `python tools/gen_attr_accessors.py --check` 判为不同步。 / Hand edits make that check report it as out of sync.
+    # ------------------------------------------------------------------
+    # >>> gen_attr_accessors: begin (generated, do not edit by hand)
+    def set_x(self, value) -> "EllipseElement":
+        """设置 x（等价 ``update(x=value)``）。 / Set x; the same as ``update(x=value)``."""
+        return self.update(x=value)
+
+    def get_x(self) -> object:
+        """读取 x 的当前属性值。 / Read the current raw x attribute."""
+        return self._get_attr_value("x")
+
+    def set_y(self, value) -> "EllipseElement":
+        """设置 y（等价 ``update(y=value)``）。 / Set y; the same as ``update(y=value)``."""
+        return self.update(y=value)
+
+    def get_y(self) -> object:
+        """读取 y 的当前属性值。 / Read the current raw y attribute."""
+        return self._get_attr_value("y")
+
+    def set_radius(self, value) -> "EllipseElement":
+        """设置 radius（等价 ``update(radius=value)``）。 / Set radius; the same as ``update(radius=value)``."""
+        return self.update(radius=value)
+
+    def get_radius(self) -> object:
+        """读取 radius 的当前属性值。 / Read the current raw radius attribute."""
+        return self._get_attr_value("radius")
+
+    def set_rotate(self, value) -> "EllipseElement":
+        """设置 rotate（等价 ``update(rotate=value)``）。 / Set rotate; the same as ``update(rotate=value)``."""
+        return self.update(rotate=value)
+
+    def get_rotate(self) -> object:
+        """读取 rotate 的当前属性值。 / Read the current raw rotate attribute."""
+        return self._get_attr_value("rotate")
+    # <<< gen_attr_accessors: end
 
 # ===========================================================================
 # 使用示例

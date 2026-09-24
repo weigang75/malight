@@ -13,7 +13,8 @@ from typing import Any, Optional, TypeVar
 from ..svg_backend import SvgNode, fmt_num
 from ..definitions import (Color, PaperSize, PaperSettings,
     StrokeCap, StrokeJoin, ArrowStyle, PointStyle, TextHAlign, TextVAlign,
-    GridRepeatType, CoordUnits, PNGMode, PDFMode, DOCXMode, SystemFont)
+    GridRepeatType, CoordUnits, PNGMode, PDFMode, DOCXMode, SystemFont,
+    FontEmbed, ImageEmbed)
 from ..elements import (Element, CircleElement, EllipseElement, RectElement,
     LineElement, PolylineElement, PolygonElement, TextElement, TextPathElement,
     ImageElement, SVGImageElement, GroupElement, TemplateElement, UseElement,
@@ -59,7 +60,8 @@ class BoardCore:
     生命周期钩子、finish() 保存、export_png/pdf/docx 导出。
     """
 
-    def __init__(self, file_path, width=None, height=None, view_box=None):
+    def __init__(self, file_path, width=None, height=None, view_box=None,
+                 fonts=None, images=None):
         """
         :param file_path: 保存的 SVG 文件路径（不带 .svg 后缀会自动补全）；
                           相对路径会存到 ``./output/`` 目录（自动创建，
@@ -67,9 +69,13 @@ class BoardCore:
         :param width: 画布宽（默认 1000）
         :param height: 画布高（默认 1000）
         :param view_box: SVG viewBox 字符串，如 "0 0 800 600"
+        :param fonts: 字体嵌入方式 FontEmbed.SUBSET（默认）/ EMBED / LINK
+                      —— 见 :meth:`set_embed`
+        :param images: 图片嵌入方式 ImageEmbed.EMBED（默认）/ LINK
 
         示例::
             pen = MagicPen("poster", width=1080, height=1920)
+            pen = MagicPen("poster", fonts="link", images="link")   # 文件最小
         """
         self._registry = {}         # id -> 元素 反查表
         self._filter_chains = {}    # 滤镜 id -> FilterChain（元素的 filter 属性可反查回链）
@@ -111,6 +117,11 @@ class BoardCore:
         Element._id_counter = 0
         self._configs = {}
         self._js = []
+
+        # 资源嵌入方式（英文版新增，见 set_embed）：字体默认按用字自动子集化，
+        # 图片默认 base64 内嵌 —— 都内嵌，但尽量小。
+        self.font_embed = str(fonts) if fonts is not None else FontEmbed.SUBSET
+        self.image_embed = str(images) if images is not None else ImageEmbed.EMBED
 
         # 便捷子工具（对应中文版 board.滤镜 / board.变换 等）
         self.filter = FilterAPI(self)
@@ -247,6 +258,42 @@ class BoardCore:
     # 裁剪 / 遮罩
     # ------------------------------------------------------------------
 
+    def set_embed(self, fonts=None, images=None) -> _Pen:
+        """
+        设置「资源嵌入方式」（英文版新增）：字体与图片要不要写进 SVG。 / Choose how fonts and images are written into the SVG (English-edition addition).
+
+        本地字体文件 / 本地图片默认都是**内嵌**的（SVG 自带资源、换电脑不掉）。
+        这两个开关让你按需选择：
+
+        * ``fonts=FontEmbed.SUBSET``（默认）—— 只内嵌画面上**实际用到的字**，
+          11 MB 的中文字体通常能降到几 KB，同时仍然随 SVG 走、换电脑不掉字；
+          没装 fontTools 时自动退回整份内嵌（宁可变大也不掉字）。
+        * ``fonts=FontEmbed.EMBED`` —— 整份字体 base64 内嵌（最保险）。
+        * ``fonts=FontEmbed.LINK`` —— 只写字体文件的本地路径，文件最小；
+          同一台电脑（字体路径不变）正常显示，换电脑 / 挪字体就掉字。
+        * ``images=ImageEmbed.EMBED``（默认）—— 图片 base64 内嵌，离线可看。
+        * ``images=ImageEmbed.LINK`` —— 只引用图片路径（相对 SVG 所在目录），
+          SVG 最小；图片挪走 / 换电脑就看不到。
+
+        :param fonts: FontEmbed.SUBSET / EMBED / LINK（也接受字符串）
+        :param images: ImageEmbed.EMBED / LINK（也接受字符串）
+        :return: self（可链式）
+
+        示例::
+
+            pen = Malight("poster", fonts=FontEmbed.LINK, images=ImageEmbed.LINK)
+            pen.set_embed(fonts="subset")        # 只有字体要内嵌
+            pen.set_embed(images="link")         # 图片只引用，不撑大文件
+
+        Three modes per asset type; the defaults (SUBSET fonts, EMBED images)
+        keep the SVG self-contained while staying as small as possible.
+        """
+        if fonts is not None:
+            self.font_embed = str(fonts)
+        if images is not None:
+            self.image_embed = str(images)
+        return self
+
     def set_background_color(self, color) -> _Pen:
         """
         设置画布背景色（对应中文版 `设置背景色`）。 / Set the canvas background color.
@@ -266,16 +313,19 @@ class BoardCore:
         self.canvas_node.children.insert(0, rect)
         return self
 
-    def add_background_rect(self, fill_color, opacity=1.0, id_=None) -> RectElement:
+    def add_background_rect(self, fill_color, opacity=1.0, id_=None,
+                            **kw) -> RectElement:
         """
         添加背景矩形（对应中文版 `矩形背景`，与 set_background_color 等价，
         但可控制透明度并返回元素）。 / Add a background rectangle; unlike set_background_color it takes opacity and returns the element.
+
+        :param kw: 其它公共样式与描边参数（blend_mode / stroke_color 等）
 
         示例::
             pen.add_background_rect("#fffbe6", opacity=0.9)
         """
         el = self.rect(0, 0, self.width, self.height,
-                            fill_color=fill_color, opacity=opacity, id_=id_)
+                            fill_color=fill_color, opacity=opacity, id_=id_, **kw)
         el.send_to_back()
         return el
 

@@ -13,7 +13,7 @@ description = "malight - SVG drawing toolkit ported and enhanced from Shenbi Mal
 readme = "README.pypi.md"
 license = "MIT"
 license-files = ["LICENSE"]
-authors = [{ name = "malight contributors" }]
+authors = [{ name = "weigang", email = "gang.wei@qq.com" }]
 keywords = ["svg", "drawing", "vector", "2d", "graphics", "filter", "magicpen", "malight"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",

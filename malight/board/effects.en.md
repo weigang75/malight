@@ -19,10 +19,10 @@ ClipMaskMixin - clipping and masking (SVG clipPath and mask).
 
 | Method | Description |
 |---|---|
-| `clipPath(clip_shape, targets=None, units=None, id_=None)` | Clip target elements with an arbitrary shape. |
-| `clip_circle(x, y, radius, targets=None, units=None, id_=None)` | Clip with a circle. |
-| `clip_rect(x, y, width, height, targets=None, units=None, id_=None)` | Clip with a rectangle. |
-| `mask(mask_shape, targets=None, units=None, content_units=None, id_=None)` | Mask: the mask's brightness decides how visible the target is. |
+| `clipPath(clip_shape, targets=None, units=None, id_=None, **kw)` | Clip target elements with an arbitrary shape. |
+| `clip_circle(x, y, radius, targets=None, units=None, id_=None, **kw)` | Clip with a circle. |
+| `clip_rect(x, y, width, height, targets=None, units=None, id_=None, **kw)` | Clip with a rectangle. |
+| `mask(mask_shape, targets=None, units=None, content_units=None, id_=None, **kw)` | Mask: the mask's brightness decides how visible the target is. |
 
 ---
 

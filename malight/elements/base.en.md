@@ -57,6 +57,7 @@ Base class of every element.
 | `get_style_str()` | Read the current raw style attribute. |
 | `set_id(id_)` | Set the element id, which get_element(id) can look up later. |
 | `set_filter(f, merge=True)` | Attach a filter; calling it again stacks the new effects instead of overwriting the old ones. |
+| `get_filter()` | Read the current raw filter attribute, such as `"url(#fx_1)"`; None when there is no filter. |
 | `fx_chain(pad=0.4)` | Return the chain bound to this element, creating and binding a new one when there is none. |
 | `fx(name, *args, **kwargs)` | Stack any filter effect by name; the generic entry point. |
 | `fx_blur(std_deviation=3)` | Stack a Gaussian blur; same as pen.fx.blur. |
@@ -102,6 +103,7 @@ Base class of every element.
 | `send_to_back()` | Send to back by moving first among siblings. |
 | `change_group(new_parent)` | Move the element into another group. |
 | `to_group(id_=None)` | Wrap this element in a new group in place and return the group. |
+| `to_template(id_=None, view_box=None)` | Turn this element into a `<symbol>` template in place and return the template. |
 | `clone(dx=0, dy=0, id_=None)` | Clone the element, optionally with an offset and a new id. |
 | `update(**kw)` | Update only the attributes you pass in; everything else keeps its current value. |
 | `bbox()` | Element bounding box as (min_x, min_y, max_x, max_y); None when it cannot be determined. |
@@ -186,10 +188,15 @@ if __name__ == "__main__":
 # at the bottom solves both. elements.__init__ imports base before group, so no cycle.
 # ---------------------------------------------------------------------------
 from .group import GroupElement  # noqa: E402
+
+# ---------------------------------------------------------------------------
+# Bottom import (cont.): same idea for to_template()'s TemplateElement annotation.
+# ---------------------------------------------------------------------------
+from .symbol import TemplateElement  # noqa: E402
 ```
 
 ---
 
 ## Sibling modules
 
-[circle](circle.en.md) ｜ [clippath](clippath.en.md) ｜ [ellipse](ellipse.en.md) ｜ [group](group.en.md) ｜ [image](image.en.md) ｜ [line](line.en.md) ｜ [link](link.en.md) ｜ [marker](marker.en.md) ｜ [mask](mask.en.md) ｜ [path](path.en.md) ｜ [pattern](pattern.en.md) ｜ [polygon](polygon.en.md) ｜ [polyline](polyline.en.md) ｜ [rect](rect.en.md) ｜ [svgimage](svgimage.en.md) ｜ [symbol](symbol.en.md) ｜ [text](text.en.md) ｜ [textpath](textpath.en.md) ｜ [use](use.en.md)
+[circle](circle.en.md) ｜ [clippath](clippath.en.md) ｜ [ellipse](ellipse.en.md) ｜ [group](group.en.md) ｜ [image](image.en.md) ｜ [line](line.en.md) ｜ [link](link.en.md) ｜ [marker](marker.en.md) ｜ [mask](mask.en.md) ｜ [path](path.en.md) ｜ [pattern](pattern.en.md) ｜ [polygon](polygon.en.md) ｜ [polyline](polyline.en.md) ｜ [rect](rect.en.md) ｜ [svggroup](svggroup.en.md) ｜ [svgimage](svgimage.en.md) ｜ [symbol](symbol.en.md) ｜ [text](text.en.md) ｜ [textpath](textpath.en.md) ｜ [use](use.en.md)

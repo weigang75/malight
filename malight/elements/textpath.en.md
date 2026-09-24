@@ -15,6 +15,27 @@ TextPathElement: text laid out along a path.
 
 Text-path element: text laid out along a path.
 
+| Method | Description |
+|---|---|
+| `get_text()` | Read the current text content, which lives on the inner `<textPath>`. |
+| `get_start_offset()` | Read the startOffset value (`"0%"` by default). |
+| `get_path()` | Read the guide path's `d` string; the guide lives in defs and is referenced by id. |
+| `set_path(value)` | Set path; the same as `update(path=value)`. |
+| `set_text(value)` | Set text; the same as `update(text=value)`. |
+| `set_start_offset(value)` | Set start_offset; the same as `update(start_offset=value)`. |
+| `set_font(value)` | Set font; the same as `update(font=value)`. |
+| `get_font()` | Read the current raw font attribute. |
+| `set_font_size(value)` | Set font_size; the same as `update(font_size=value)`. |
+| `get_font_size()` | Read the current raw font_size attribute. |
+| `set_weight(value)` | Set weight; the same as `update(weight=value)`. |
+| `get_weight()` | Read the current raw weight attribute. |
+| `set_decoration(value)` | Set decoration; the same as `update(decoration=value)`. |
+| `get_decoration()` | Read the current raw decoration attribute. |
+| `set_letter_spacing(value)` | Set letter_spacing; the same as `update(letter_spacing=value)`. |
+| `get_letter_spacing()` | Read the current raw letter_spacing attribute. |
+| `set_h_align(value)` | Set h_align; the same as `update(h_align=value)`. |
+| `get_h_align()` | Read the current raw h_align attribute. |
+
 ---
 
 ## Full example
@@ -77,4 +98,4 @@ if __name__ == "__main__":
 
 ## Sibling modules
 
-[base](base.en.md) ｜ [circle](circle.en.md) ｜ [clippath](clippath.en.md) ｜ [ellipse](ellipse.en.md) ｜ [group](group.en.md) ｜ [image](image.en.md) ｜ [line](line.en.md) ｜ [link](link.en.md) ｜ [marker](marker.en.md) ｜ [mask](mask.en.md) ｜ [path](path.en.md) ｜ [pattern](pattern.en.md) ｜ [polygon](polygon.en.md) ｜ [polyline](polyline.en.md) ｜ [rect](rect.en.md) ｜ [svgimage](svgimage.en.md) ｜ [symbol](symbol.en.md) ｜ [text](text.en.md) ｜ [use](use.en.md)
+[base](base.en.md) ｜ [circle](circle.en.md) ｜ [clippath](clippath.en.md) ｜ [ellipse](ellipse.en.md) ｜ [group](group.en.md) ｜ [image](image.en.md) ｜ [line](line.en.md) ｜ [link](link.en.md) ｜ [marker](marker.en.md) ｜ [mask](mask.en.md) ｜ [path](path.en.md) ｜ [pattern](pattern.en.md) ｜ [polygon](polygon.en.md) ｜ [polyline](polyline.en.md) ｜ [rect](rect.en.md) ｜ [svggroup](svggroup.en.md) ｜ [svgimage](svgimage.en.md) ｜ [symbol](symbol.en.md) ｜ [text](text.en.md) ｜ [use](use.en.md)

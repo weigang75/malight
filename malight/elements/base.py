@@ -24,7 +24,7 @@ if __name__ == "__main__" and not __package__:
 
 import inspect
 import re
-from typing import Optional, Tuple, TypeVar
+from typing import Generic, Optional, Tuple, TypeVar
 from ..svg_backend import SvgNode, fmt_num
 from ..definitions import (Color, StrokeCap, StrokeJoin, TextHAlign, TextVAlign,
                            value_of)
@@ -97,8 +97,16 @@ def _fmt_transform(items):
     return " ".join(items)
 
 
-# 方法链类型变量：返回 self 的方法标注 _Self，子类调用时
-# IDE（PyCharm/VSCode）能推导出准确的子类类型
+# 方法链的 self 类型变量（PEP 484 的 self-type 写法）。
+#
+# 返回 self 的方法标注 `-> _Self`，并给首个参数补 `self: _Self`。
+# Element 本身写成 `Generic[_Self]`，每个子类声明成
+# `class PathElement(Element["PathElement"])` —— 于是
+# `pen.path(...).move_to(...).set_opacity(...)` 在 IDE 里一路都是
+# PathElement，点号后面补出来的是子类自己的方法，而不是全在 Element 上。
+# （英文版修正：只写 `-> _Self` 而没有泛型实参时，PyCharm 只按上界
+# Element 推导，链式补全拿不到子类方法。子类自己的方法另有更直接的
+# 写法：直接标 `-> "PathElement"`，不依赖任何推导。）
 _Self = TypeVar("_Self", bound="Element")
 
 
@@ -129,7 +137,7 @@ _ATTR_ALIAS = {
 }
 
 
-class Element:
+class Element(Generic[_Self]):
     """
     所有元素的基类（对应中文版 `元素`）。 / Base class of every element.
 
@@ -147,9 +155,10 @@ class Element:
     _id_counter = 0   # 全局自增 ID（用于未显式指定 id 的元素）
     _attr_params = frozenset()   # 本类 _update_attrs 的参数名（子类自动覆盖）
 
-    # 所有元素都支持的「公共样式参数」：只要 _update_attrs 带 **kw，
-    # 这些参数就能用动态 set_<参数> / get_<参数> 方法再设置/读取
-    # （与 _apply_common / _apply_paint 实际处理的键保持一致）
+    # 所有元素都支持的「公共样式参数」：只要 _update_attrs 带 **kw，这些参数就能
+    # 用 set_<参数> / get_<参数> 再设置/读取（与 _apply_common / _apply_paint
+    # 实际处理的键保持一致）。它们的访问器就写在本类下方（显式方法，IDE 可见），
+    # 唯一例外是混合模式：写进 style 里读不回来，只有 set_blend_mode。
     _COMMON_ATTR_PARAMS = frozenset(
         "opacity fill_opacity stroke_opacity class_name style_str "
         "vector_effect blend_mode filter paint_order "
@@ -227,8 +236,13 @@ class Element:
         return f"{prefix}_{cls._id_counter}"
 
     # ---------------------------------------------------------------
-    # 动态 set_<参数> / get_<参数>（英文版新增：创建后逐项再设置/读取）
+    # set_<参数> / get_<参数> 兜底（创建后逐项再设置/读取）
     # ---------------------------------------------------------------
+    # 元素专属参数的访问器由 tools/gen_attr_accessors.py 写进各元素类体，
+    # 公共样式参数的在下面手写 —— 都是真实方法，IDE 能补全、拼错会报错。
+    # 本兜底只服务「直接以参数名调用」那一形式（t.font_size(36)）：它没法
+    # 显式展开，因为像 EllipseElement.rotate 这种参数名与 Element.rotate()
+    # 撞名。
     # 参数名 -> SVG 属性名的对照（get_* 读取节点属性时用；没列出的按
     # 「下划线转连字符」猜测，如 letter_spacing -> letter-spacing）
     _GET_ATTR_ALIASES = {
@@ -250,26 +264,32 @@ class Element:
 
     def __getattr__(self, name):
         """
-        动态合成元素级「再设置 / 读取」方法（英文版新增），三种写法都支持：
+        兜底合成元素级「再设置 / 读取」方法（三种写法都支持）：
 
         1. ``set_<参数>(值)``  —— 链式改值（``t.set_font_size(36)``）
         2. ``get_<参数>()``    —— 读当前属性原值（``t.get_font_size()``）
         3. 直接以参数名调用    —— 无参读值、带参改值（可链式）：
            ``t.font_size()`` 读、``t.font_size(36)`` 改并返回 self
 
-        每个元素的可用参数名来自它自己的 ``_update_attrs`` 签名（带 ``**kw``
-        的类再并入全部公共样式参数），因此动态方法接受的参数名与创建时
-        完全一致；拼错的参数名当场 AttributeError，不会被静默吞掉。
+        ``set_`` / ``get_`` 这两种**已经是真实方法**，不再靠这里：元素专属参数
+        的访问器由 ``tools/gen_attr_accessors.py`` 写在各元素类体内，公共样式
+        的在下面手写 —— 都是显式方法，PyCharm 能补全、拼错会报错。
+        （用户报过「动态合成的成员 IDE 看不见」；动态写入的成员静态分析不认。）
 
-        Dynamically synthesize post-creation accessors (new in EN edition):
-        ``set_<param>(v)`` chains, ``get_<param>()`` reads, and calling the
-        bare parameter name reads with no args or sets with one arg.
+        因此本方法现在只负责第 3 种写法：像 ``EllipseElement.rotate`` 这种
+        参数名与 ``Element.rotate()`` 撞名的没法显式展开，只能留在这里兜底；
+        拼错的参数名当场 AttributeError，不会被静默吞掉。
+
+        Fallback synthesis for post-creation accessors. The ``set_`` / ``get_``
+        forms are now real methods (element-specific ones generated into each
+        class body, common style ones written out below); only the bare
+        parameter-name form still goes through this hook.
 
         示例 / Example::
 
             t = pen.text(100, 100, "Hi", font_size=20)
-            t.set_font_size(36).set_fill_color("teal")      # set_ 风格
-            t.stroke_color("orangered").stroke_width(3)     # 参数名风格
+            t.set_font_size(36).set_fill_color("teal")      # 真实方法 / real method
+            t.font_size(36)                                 # 走本兜底 / via this hook
             t.get_font_size()      # -> 36
             t.font_size()          # -> 36（无参读值）
         """
@@ -318,16 +338,18 @@ class Element:
         return self.node.attribs.get(attr)
 
     # ---------------------------------------------------------------
-    # 公共样式参数的显式访问器（英文版新增）
+    # 公共样式参数的显式访问器
     # ---------------------------------------------------------------
-    # 下面这些 set_<参数> / get_<参数> 与 __getattr__ 动态合成的版本行为
-    # 完全一致，之所以写成显式方法，是因为 IDE 只能补全源码里真实存在的
-    # 方法（动态合成的静态分析看不见）。其它参数依旧走动态兜底。
-    # These accessors behave exactly like the dynamically synthesized ones;
-    # they are spelled out so IDEs can autocomplete them. Other parameters
-    # still fall back to __getattr__.
+    # 下面这些 set_<参数> / get_<参数> 与 __getattr__ 兜底合成的版本行为完全
+    # 一致，写成显式方法是因为 IDE 只能补全源码里真实存在的方法（动态写入的
+    # 成员静态分析看不见）。元素专属参数的同名访问器在各元素类体里，由
+    # tools/gen_attr_accessors.py 生成。
+    # These accessors behave exactly like the ones the __getattr__ fallback
+    # synthesizes; they are spelled out so IDEs can autocomplete them.
+    # Element-specific ones live in each element class, generated by
+    # tools/gen_attr_accessors.py.
 
-    def set_opacity(self, value) -> _Self:
+    def set_opacity(self: _Self, value) -> _Self:
         """设置整体不透明度（0-1）。 / Set the overall opacity (0-1).
 
         示例 / Example::
@@ -339,7 +361,7 @@ class Element:
         """读取不透明度的当前属性值（没设置过返回 None）。 / Read the current raw opacity attribute (None if never set)."""
         return self._get_attr_value("opacity")
 
-    def set_fill_opacity(self, value) -> _Self:
+    def set_fill_opacity(self: _Self, value) -> _Self:
         """设置填充不透明度。 / Set the fill opacity.
 
         示例 / Example::
@@ -351,7 +373,7 @@ class Element:
         """读取填充不透明度的当前属性值。 / Read the current raw fill-opacity attribute."""
         return self._get_attr_value("fill_opacity")
 
-    def set_stroke_opacity(self, value) -> _Self:
+    def set_stroke_opacity(self: _Self, value) -> _Self:
         """设置描边不透明度。 / Set the stroke opacity.
 
         示例 / Example::
@@ -363,7 +385,7 @@ class Element:
         """读取描边不透明度的当前属性值。 / Read the current raw stroke-opacity attribute."""
         return self._get_attr_value("stroke_opacity")
 
-    def set_fill_color(self, color) -> _Self:
+    def set_fill_color(self: _Self, color) -> _Self:
         """设置填充色（支持 ColorName、#RRGGBB、渐变引用）；传 None 去掉填充。 / Set the fill colour (ColorName, #RRGGBB or a gradient reference); None removes the fill.
 
         示例 / Example::
@@ -377,7 +399,7 @@ class Element:
         """读取填充色的当前属性值。 / Read the current raw fill attribute."""
         return self._get_attr_value("fill_color")
 
-    def set_stroke_color(self, color) -> _Self:
+    def set_stroke_color(self: _Self, color) -> _Self:
         """设置描边色；传 None 去掉描边。 / Set the stroke colour; None removes the stroke.
 
         示例 / Example::
@@ -391,7 +413,7 @@ class Element:
         """读取描边色的当前属性值。 / Read the current raw stroke attribute."""
         return self._get_attr_value("stroke_color")
 
-    def set_stroke_width(self, width) -> _Self:
+    def set_stroke_width(self: _Self, width) -> _Self:
         """设置描边宽度；传 None 去掉描边宽度。 / Set the stroke width; None removes it.
 
         示例 / Example::
@@ -405,7 +427,7 @@ class Element:
         """读取描边宽度的当前属性值。 / Read the current raw stroke-width attribute."""
         return self._get_attr_value("stroke_width")
 
-    def set_stroke_style(self, dash) -> _Self:
+    def set_stroke_style(self: _Self, dash) -> _Self:
         """设置描边虚线样式（如 "6,3"）。 / Set the dash pattern, e.g. "6,3".
 
         示例 / Example::
@@ -417,7 +439,7 @@ class Element:
         """读取虚线样式的当前属性值。 / Read the current raw stroke-dasharray attribute."""
         return self._get_attr_value("stroke_style")
 
-    def set_dash_offset(self, offset) -> _Self:
+    def set_dash_offset(self: _Self, offset) -> _Self:
         """设置虚线起始偏移（配合虚线做流动效果）。 / Set the dash offset (animate a dashed line by shifting it).
 
         示例 / Example::
@@ -429,7 +451,7 @@ class Element:
         """读取虚线偏移的当前属性值。 / Read the current raw stroke-dashoffset attribute."""
         return self._get_attr_value("dash_offset")
 
-    def set_stroke_cap(self, cap) -> _Self:
+    def set_stroke_cap(self: _Self, cap) -> _Self:
         """设置线端样式（butt / round / square）。 / Set the line cap (butt, round or square).
 
         示例 / Example::
@@ -441,7 +463,7 @@ class Element:
         """读取线端样式的当前属性值。 / Read the current raw stroke-linecap attribute."""
         return self._get_attr_value("stroke_cap")
 
-    def set_stroke_join(self, join) -> _Self:
+    def set_stroke_join(self: _Self, join) -> _Self:
         """设置转折样式（miter / round / bevel）。 / Set the line join (miter, round or bevel).
 
         示例 / Example::
@@ -453,7 +475,7 @@ class Element:
         """读取转折样式的当前属性值。 / Read the current raw stroke-linejoin attribute."""
         return self._get_attr_value("stroke_join")
 
-    def set_fill_rule(self, rule) -> _Self:
+    def set_fill_rule(self: _Self, rule) -> _Self:
         """设置填充规则（evenodd 可给重叠路径挖洞）。 / Set the fill rule; evenodd punches holes in overlapping paths.
 
         示例 / Example::
@@ -465,15 +487,20 @@ class Element:
         """读取填充规则的当前属性值。 / Read the current raw fill-rule attribute."""
         return self._get_attr_value("fill_rule")
 
-    def set_blend_mode(self, mode) -> _Self:
+    def set_blend_mode(self: _Self, mode) -> _Self:
         """设置混合模式（写进 CSS style）。 / Set the blend mode (written into the CSS style).
+
+        没有对应的 ``get_blend_mode``：混合模式落在 style 里，节点属性读不回来，
+        要读回请用 ``get_style_str()`` 或看 ``node.attribs["style"]``。
+        There is no ``get_blend_mode`` on purpose: the blend mode lives in the style
+        attribute, so it cannot be read back as a node attribute.
 
         示例 / Example::
             el.set_blend_mode(BlendMode.MULTIPLY)
         """
         return self.update(blend_mode=mode)
 
-    def set_paint_order(self, order) -> _Self:
+    def set_paint_order(self: _Self, order) -> _Self:
         """设置绘制顺序，``PaintOrder.STROKE`` 表示先描边后填充（空心字必备）。 / Set the paint order; ``PaintOrder.STROKE`` draws the stroke first, which outlined/hollow text needs.
 
         示例 / Example::
@@ -486,7 +513,7 @@ class Element:
         """读取绘制顺序的当前属性值。 / Read the current raw paint-order attribute."""
         return self._get_attr_value("paint_order")
 
-    def set_vector_effect(self, effect) -> _Self:
+    def set_vector_effect(self: _Self, effect) -> _Self:
         """设置矢量效果（non-scaling-stroke = 缩放时线宽不变）。 / Set the vector effect; non-scaling-stroke keeps the stroke width when scaled.
 
         示例 / Example::
@@ -498,7 +525,7 @@ class Element:
         """读取矢量效果的当前属性值。 / Read the current raw vector-effect attribute."""
         return self._get_attr_value("vector_effect")
 
-    def set_class_name(self, name) -> _Self:
+    def set_class_name(self: _Self, name) -> _Self:
         """设置 CSS 类名（配合样式表做分类样式）。 / Set the CSS class name.
 
         示例 / Example::
@@ -510,7 +537,7 @@ class Element:
         """读取 CSS 类名的当前属性值。 / Read the current raw class attribute."""
         return self._get_attr_value("class_name")
 
-    def set_style_str(self, style) -> _Self:
+    def set_style_str(self: _Self, style) -> _Self:
         """直接设置内联 CSS。 / Set the inline CSS style string.
 
         示例 / Example::
@@ -522,7 +549,7 @@ class Element:
         """读取内联 CSS 的当前属性值。 / Read the current raw style attribute."""
         return self._get_attr_value("style_str")
 
-    def set_id(self, id_) -> _Self:
+    def set_id(self: _Self, id_) -> _Self:
         """
         设置元素 id（可用于 get_element(id) 反查）。 / Set the element id, which get_element(id) can look up later.
 
@@ -638,7 +665,9 @@ class Element:
         1. 字体枚举 ``Font.SIMHEI``
         2. 字体名字符串 ``"Microsoft YaHei"``
         3. 字体文件路径 ``r"C:\\Windows\\Fonts\\simkai.ttf"``
-           —— 自动 base64 内嵌为 @font-face，换电脑不掉字体
+           —— 自动内嵌为 @font-face，换电脑不掉字体。默认只内嵌画面上
+           **实际用到的字**（自动子集化，几 KB 级别）；想整份内嵌或只引用
+           本地路径，用 ``pen.set_embed(fonts=FontEmbed.EMBED / LINK)``。
 
         :return: 可写入 font-family 的字体名；未指定时返回 None
         """
@@ -656,7 +685,7 @@ class Element:
             return None
         return v
 
-    def set_filter(self, f, merge=True) -> _Self:
+    def set_filter(self: _Self, f, merge=True) -> _Self:
         """
         给元素绑定滤镜，**多次调用会叠加而不是覆盖**（英文版新增，配合 pen.fx 滤镜工厂）。 / Attach a filter; calling it again stacks the new effects instead of overwriting the old ones.
 
@@ -705,6 +734,10 @@ class Element:
         self.node.set("filter", f.url())
         return self
 
+    def get_filter(self) -> object:
+        """读取滤镜属性的当前值（如 ``"url(#fx_1)"``；没滤镜返回 None）。 / Read the current raw filter attribute, such as ``"url(#fx_1)"``; None when there is no filter."""
+        return self._get_attr_value("filter")
+
     def _current_filter_chain(self):
         """
         由元素当前的 ``filter`` 属性反查回它所属的滤镜链（内部方法）。 / Resolve the chain that the element's current filter attribute points at (internal).
@@ -727,7 +760,7 @@ class Element:
     # ---------------------------------------------------------------
     # 滤镜叠加：fx_* 快捷方法（等价 pen.fx.xxx(...)，并自动叠加到已有滤镜之后）
     # ---------------------------------------------------------------
-    def _fx(self, name, *args, **kwargs) -> _Self:
+    def _fx(self: _Self, name, *args, **kwargs) -> _Self:
         """
         调用 pen.fx 上的某个效果并叠加到本元素已有滤镜之后（内部方法）。 / Call one effect from pen.fx and stack it after the element's existing filter (internal).
 
@@ -766,7 +799,7 @@ class Element:
             self.set_filter(chain)
         return chain
 
-    def fx(self, name, *args, **kwargs) -> _Self:
+    def fx(self: _Self, name, *args, **kwargs) -> _Self:
         """
         按名字叠加任意滤镜效果（通用入口）。 / Stack any filter effect by name; the generic entry point.
 
@@ -780,110 +813,110 @@ class Element:
         """
         return self._fx(name, *args, **kwargs)
 
-    def fx_blur(self, std_deviation=3) -> _Self:
+    def fx_blur(self: _Self, std_deviation=3) -> _Self:
         """叠加高斯模糊（等价 pen.fx.blur）。 / Stack a Gaussian blur; same as pen.fx.blur. """
         return self._fx("blur", std_deviation=std_deviation)
 
-    def fx_sharpen(self, amount=0.5) -> _Self:
+    def fx_sharpen(self: _Self, amount=0.5) -> _Self:
         """叠加锐化（等价 pen.fx.sharpen）。 / Stack a sharpen pass; same as pen.fx.sharpen. """
         return self._fx("sharpen", amount=amount)
 
-    def fx_motion_blur(self, distance=10, angle=0) -> _Self:
+    def fx_motion_blur(self: _Self, distance=10, angle=0) -> _Self:
         """叠加动感模糊（等价 pen.fx.motion_blur）。 / Stack a motion blur; same as pen.fx.motion_blur. """
         return self._fx("motion_blur", distance=distance, angle=angle)
 
-    def fx_shadow(self, dx=4, dy=4, blur=4, color="black", opacity=0.5) -> _Self:
+    def fx_shadow(self: _Self, dx=4, dy=4, blur=4, color="black", opacity=0.5) -> _Self:
         """叠加投影（等价 pen.fx.shadow）。 / Stack a drop shadow; same as pen.fx.shadow. """
         return self._fx("shadow", dx=dx, dy=dy, blur=blur,
                         color=color, opacity=opacity)
 
-    def fx_drop_shadow(self, dx=3, dy=3, std_deviation=3, opacity=0.5) -> _Self:
+    def fx_drop_shadow(self: _Self, dx=3, dy=3, std_deviation=3, opacity=0.5) -> _Self:
         """叠加投影（旧参数名版本，等价 pen.fx.drop_shadow）。 / Stack a drop shadow with the older parameter names; same as pen.fx.drop_shadow. """
         return self._fx("drop_shadow", dx=dx, dy=dy,
                         std_deviation=std_deviation, opacity=opacity)
 
-    def fx_inner_shadow(self, dx=3, dy=3, blur=3, color="black", opacity=0.6) -> _Self:
+    def fx_inner_shadow(self: _Self, dx=3, dy=3, blur=3, color="black", opacity=0.6) -> _Self:
         """叠加内阴影（等价 pen.fx.inner_shadow）。 / Stack an inner shadow; same as pen.fx.inner_shadow. """
         return self._fx("inner_shadow", dx=dx, dy=dy, blur=blur,
                         color=color, opacity=opacity)
 
-    def fx_glow(self, std_deviation=4, color="#ffb703", opacity=0.9) -> _Self:
+    def fx_glow(self: _Self, std_deviation=4, color="#ffb703", opacity=0.9) -> _Self:
         """叠加外发光（等价 pen.fx.glow）。 / Stack an outer glow; same as pen.fx.glow. """
         return self._fx("glow", std_deviation=std_deviation,
                         color=color, opacity=opacity)
 
-    def fx_inner_glow(self, blur=5, color="#ffd166", opacity=0.9) -> _Self:
+    def fx_inner_glow(self: _Self, blur=5, color="#ffd166", opacity=0.9) -> _Self:
         """叠加内发光（等价 pen.fx.inner_glow）。 / Stack an inner glow; same as pen.fx.inner_glow. """
         return self._fx("inner_glow", blur=blur, color=color, opacity=opacity)
 
-    def fx_bevel(self, strength=1.0, blur=2, azimuth=225, elevation=55) -> _Self:
+    def fx_bevel(self: _Self, strength=1.0, blur=2, azimuth=225, elevation=55) -> _Self:
         """叠加斜面浮雕高光（等价 pen.fx.bevel）。 / Stack a bevel highlight; same as pen.fx.bevel. """
         return self._fx("bevel", strength=strength, blur=blur,
                         azimuth=azimuth, elevation=elevation)
 
-    def fx_engrave(self, depth=1.2, blur=1, dark="#3E2410",
+    def fx_engrave(self: _Self, depth=1.2, blur=1, dark="#3E2410",
                    light="#FFFDF5") -> _Self:
         """叠加雕刻凹陷（与凸起的 fx_bevel 相反，等价 pen.fx.engrave）。 / Stack an engraved, carved-in look; the opposite of the raised fx_bevel, and the same as pen.fx.engrave. """
         return self._fx("engrave", depth=depth, blur=blur,
                         dark=dark, light=light)
 
-    def fx_outline(self, width=3, color="gold") -> _Self:
+    def fx_outline(self: _Self, width=3, color="gold") -> _Self:
         """叠加外描边（等价 pen.fx.outline）。 / Stack an outer stroke; same as pen.fx.outline. """
         return self._fx("outline", width=width, color=color)
 
-    def fx_roughen(self, scale=4, frequency=0.05) -> _Self:
+    def fx_roughen(self: _Self, scale=4, frequency=0.05) -> _Self:
         """叠加粗糙化手绘感（等价 pen.fx.roughen）。 / Stack a roughen pass for a hand-drawn look; same as pen.fx.roughen. """
         return self._fx("roughen", scale=scale, frequency=frequency)
 
-    def fx_noise(self, opacity=0.15) -> _Self:
+    def fx_noise(self: _Self, opacity=0.15) -> _Self:
         """叠加噪点颗粒（等价 pen.fx.noise）。 / Stack grain noise; same as pen.fx.noise. """
         return self._fx("noise", opacity=opacity)
 
-    def fx_emboss(self, azimuth=45) -> _Self:
+    def fx_emboss(self: _Self, azimuth=45) -> _Self:
         """叠加浮雕灰度（等价 pen.fx.emboss）。 / Stack a grayscale emboss; same as pen.fx.emboss. """
         return self._fx("emboss", azimuth=azimuth)
 
-    def fx_edge_detect(self) -> _Self:
+    def fx_edge_detect(self: _Self) -> _Self:
         """叠加边缘检测线稿感（等价 pen.fx.edge_detect）。 / Stack edge detection for a line-art look; same as pen.fx.edge_detect. """
         return self._fx("edge_detect")
 
-    def fx_saturate(self, factor=1.2) -> _Self:
+    def fx_saturate(self: _Self, factor=1.2) -> _Self:
         """叠加饱和度调整（等价 pen.fx.saturate）。 / Stack a saturation change; same as pen.fx.saturate. """
         return self._fx("saturate", factor=factor)
 
-    def fx_hue_rotate(self, degrees=90) -> _Self:
+    def fx_hue_rotate(self: _Self, degrees=90) -> _Self:
         """叠加色相旋转（等价 pen.fx.hue_rotate）。 / Stack a hue rotation; same as pen.fx.hue_rotate. """
         return self._fx("hue_rotate", degrees=degrees)
 
-    def fx_grayscale(self) -> _Self:
+    def fx_grayscale(self: _Self) -> _Self:
         """叠加去色（等价 pen.fx.grayscale）。 / Stack a desaturate; same as pen.fx.grayscale. """
         return self._fx("grayscale")
 
-    def fx_sepia(self) -> _Self:
+    def fx_sepia(self: _Self) -> _Self:
         """叠加怀旧褐色调（等价 pen.fx.sepia）。 / Stack a sepia tone; same as pen.fx.sepia. """
         return self._fx("sepia")
 
-    def fx_brightness(self, factor=1.2) -> _Self:
+    def fx_brightness(self: _Self, factor=1.2) -> _Self:
         """叠加亮度调整（等价 pen.fx.brightness）。 / Stack a brightness change; same as pen.fx.brightness. """
         return self._fx("brightness", factor=factor)
 
-    def fx_contrast(self, factor=1.3) -> _Self:
+    def fx_contrast(self: _Self, factor=1.3) -> _Self:
         """叠加对比度调整（等价 pen.fx.contrast）。 / Stack a contrast change; same as pen.fx.contrast. """
         return self._fx("contrast", factor=factor)
 
-    def fx_gamma(self, r=1.0, g=1.0, b=1.0) -> _Self:
+    def fx_gamma(self: _Self, r=1.0, g=1.0, b=1.0) -> _Self:
         """叠加伽马校正（等价 pen.fx.gamma）。 / Stack a gamma correction; same as pen.fx.gamma. """
         return self._fx("gamma", r=r, g=g, b=b)
 
-    def fx_invert(self) -> _Self:
+    def fx_invert(self: _Self) -> _Self:
         """叠加反相（等价 pen.fx.invert）。 / Stack an invert; same as pen.fx.invert. """
         return self._fx("invert")
 
-    def fx_posterize(self, levels=4) -> _Self:
+    def fx_posterize(self: _Self, levels=4) -> _Self:
         """叠加色调分离（等价 pen.fx.posterize）。 / Stack a posterize; same as pen.fx.posterize. """
         return self._fx("posterize", levels=levels)
 
-    def fx_color_overlay(self, color="red", opacity=0.8) -> _Self:
+    def fx_color_overlay(self: _Self, color="red", opacity=0.8) -> _Self:
         """叠加颜色叠加（等价 pen.fx.color_overlay）。 / Stack a color overlay; same as pen.fx.color_overlay. """
         return self._fx("color_overlay", color=color, opacity=opacity)
 
@@ -936,7 +969,7 @@ class Element:
         """把 _transform_items 同步到节点的 transform 属性。"""
         self.node.set("transform", _fmt_transform(self._transform_items) or None)
 
-    def translate(self, dx, dy=0) -> _Self:
+    def translate(self: _Self, dx, dy=0) -> _Self:
         """
         平移元素。 / Translate the element.
 
@@ -950,7 +983,7 @@ class Element:
         self._sync_transform()
         return self
 
-    def rotate(self, angle, cx=None, cy=None) -> _Self:
+    def rotate(self: _Self, angle, cx=None, cy=None) -> _Self:
         """
         旋转元素。 / Rotate the element.
 
@@ -969,7 +1002,7 @@ class Element:
         self._sync_transform()
         return self
 
-    def scale(self, sx, sy=None) -> _Self:
+    def scale(self: _Self, sx, sy=None) -> _Self:
         """
         缩放元素（sy 缺省时等比）。 / Scale the element; omitting sy keeps it proportional.
 
@@ -983,13 +1016,13 @@ class Element:
         self._sync_transform()
         return self
 
-    def skew_x(self, angle) -> _Self:
+    def skew_x(self: _Self, angle) -> _Self:
         """沿 X 轴倾斜（度）。 / Shear along the X axis, in degrees. 示例:: el.skew_x(15)"""
         self._transform_items.append(f"skewX({fmt_num(angle)})")
         self._sync_transform()
         return self
 
-    def skew_y(self, angle) -> _Self:
+    def skew_y(self: _Self, angle) -> _Self:
         """沿 Y 轴倾斜（度）。 / Shear along the Y axis, in degrees. 示例:: el.skew_y(15)"""
         self._transform_items.append(f"skewY({fmt_num(angle)})")
         self._sync_transform()
@@ -998,7 +1031,7 @@ class Element:
     # ---------------------------------------------------------------
     # SMIL 动画（对应中文版动画工具集）
     # ---------------------------------------------------------------
-    def _animate_transform(self, attr_type, values, dur, repeat_count, begin, accelerate=False) -> _Self:
+    def _animate_transform(self: _Self, attr_type, values, dur, repeat_count, begin, accelerate=False) -> _Self:
         """写入 <animateTransform> 子节点（内部方法）。"""
         an = SvgNode("animateTransform", {
             "attributeName": "transform",
@@ -1022,7 +1055,7 @@ class Element:
         self.node.add(an)
         return self
 
-    def animate_opacity(self, start=1.0, end=0.0, dur=3, repeat_count="indefinite", begin=0) -> _Self:
+    def animate_opacity(self: _Self, start=1.0, end=0.0, dur=3, repeat_count="indefinite", begin=0) -> _Self:
         """
         透明度渐变动画（对应中文版 `透明动画`）。 / Animate opacity.
 
@@ -1046,7 +1079,7 @@ class Element:
         self.node.add(an)
         return self
 
-    def animate_translate(self, offset=(0, 0), dur=3, repeat_count=1, begin=0) -> _Self:
+    def animate_translate(self: _Self, offset=(0, 0), dur=3, repeat_count=1, begin=0) -> _Self:
         """
         平移动画（对应中文版 `平移动画`）。 / Animate translation.
 
@@ -1061,7 +1094,7 @@ class Element:
         return self._animate_transform("translate", f"0 0;{fmt_num(dx)} {fmt_num(dy)}",
                                        dur, repeat_count, begin)
 
-    def animate_rotate(self, angle=360, center=(0, 0), dur=3, repeat_count="indefinite",
+    def animate_rotate(self: _Self, angle=360, center=(0, 0), dur=3, repeat_count="indefinite",
                        begin=0, accelerate=False) -> _Self:
         """
         旋转动画（对应中文版 `旋转动画` / `加速旋转动画`）。 / Animate rotation.
@@ -1079,7 +1112,7 @@ class Element:
             "rotate", f"0 {fmt_num(cx)} {fmt_num(cy)};{fmt_num(angle)} {fmt_num(cx)} {fmt_num(cy)}",
             dur, repeat_count, begin, accelerate)
 
-    def animate_scale(self, factor=(2, 2), dur=3, repeat_count=1, begin=0) -> _Self:
+    def animate_scale(self: _Self, factor=(2, 2), dur=3, repeat_count=1, begin=0) -> _Self:
         """
         缩放动画（对应中文版 `缩放动画`）。 / Animate scaling.
 
@@ -1090,15 +1123,15 @@ class Element:
         return self._animate_transform("scale", f"1 1;{fmt_num(fx)} {fmt_num(fy)}",
                                        dur, repeat_count, begin)
 
-    def animate_skew_x(self, angle=30, dur=3, repeat_count=1, begin=0) -> _Self:
+    def animate_skew_x(self: _Self, angle=30, dur=3, repeat_count=1, begin=0) -> _Self:
         """X 轴倾斜动画（对应中文版 `倾斜X动画`）。 / Animate a shear along the X axis. 示例:: el.animate_skew_x(20)"""
         return self._animate_transform("skewX", f"0;{fmt_num(angle)}", dur, repeat_count, begin)
 
-    def animate_skew_y(self, angle=30, dur=3, repeat_count=1, begin=0) -> _Self:
+    def animate_skew_y(self: _Self, angle=30, dur=3, repeat_count=1, begin=0) -> _Self:
         """Y 轴倾斜动画（对应中文版 `倾斜Y动画`）。 / Animate a shear along the Y axis. 示例:: el.animate_skew_y(20)"""
         return self._animate_transform("skewY", f"0;{fmt_num(angle)}", dur, repeat_count, begin)
 
-    def animate_motion(self, path, dur=5, rotate=False, repeat_count="indefinite", begin=0) -> _Self:
+    def animate_motion(self: _Self, path, dur=5, rotate=False, repeat_count="indefinite", begin=0) -> _Self:
         """
         沿轨迹移动动画（对应中文版 `轨迹移动动画`）。 / Animate movement along a motion path.
 
@@ -1126,7 +1159,7 @@ class Element:
         self.node.add(an)
         return self
 
-    def animate_dash_flow(self, dur=2, repeat_count="indefinite", dash="8 4", speed=64) -> _Self:
+    def animate_dash_flow(self: _Self, dur=2, repeat_count="indefinite", dash="8 4", speed=64) -> _Self:
         """
         虚线流动画（对应中文版 `虚线流动画`）：蚂蚁线效果。 / Animate marching-ants dashes flowing along the stroke.
 
@@ -1151,7 +1184,7 @@ class Element:
     # ---------------------------------------------------------------
     # 层级与生命周期
     # ---------------------------------------------------------------
-    def remove(self) -> _Self:
+    def remove(self: _Self) -> _Self:
         """
         从画布上删除本元素（对应中文版 `删除`）。 / Remove this element from the canvas.
 
@@ -1163,7 +1196,7 @@ class Element:
             self.parent_node = None
         return self
 
-    def bring_to_front(self) -> _Self:
+    def bring_to_front(self: _Self) -> _Self:
         """
         置顶（对应中文版 `置前`）：移到父容器的最后一个。 / Bring to front by moving last among siblings.
 
@@ -1175,7 +1208,7 @@ class Element:
             self.parent_node.add(self.node)
         return self
 
-    def send_to_back(self) -> _Self:
+    def send_to_back(self: _Self) -> _Self:
         """
         置底（英文版新增）：移到父容器的第一个。 / Send to back by moving first among siblings.
 
@@ -1187,7 +1220,7 @@ class Element:
             self.parent_node.children.insert(0, self.node)
         return self
 
-    def change_group(self, new_parent) -> _Self:
+    def change_group(self: _Self, new_parent) -> _Self:
         """
         把元素移动到另一个组（对应中文版 `更换组`）。 / Move the element into another group.
 
@@ -1237,7 +1270,49 @@ class Element:
             self.change_group(g)
         return g
 
-    def clone(self, dx=0, dy=0, id_=None) -> _Self:
+    def to_template(self, id_=None, view_box=None) -> "TemplateElement":
+        """
+        把本元素原地转成 <symbol> 模板并返回该模板（英文版新增）。 / Turn this element into a <symbol> template in place and return the template.
+
+        元素从画布移入 <defs> 的 <symbol>（画布上不再直接显示），view_box
+        缺省按元素包围盒推算；返回的模板用 ``clone()`` 盖章出任意多个实例
+        —— 改模板一处，所有实例一起变，画布体积也更小。 / The element moves
+        from the canvas into a <symbol> in <defs> (no longer drawn directly);
+        view_box defaults to the element's bounding box. Stamp any number of
+        instances with ``clone()`` - edit the template once, every instance
+        updates, and the file stays small.
+
+        :param id_: 模板 id（缺省自动生成 template-1、template-2 …）
+        :param view_box: 模板自己的坐标系；None = 元素包围盒（或画布尺寸）
+        :return: TemplateElement（用 ``tpl.clone(x, y, width, height)`` 盖章）
+
+        示例（背景图转模板再盖章复用）::
+            tpl = pen.image(image_file="bg.jpg", x=0, y=0,
+                            width=pen.width, height=pen.height).to_template()
+            tpl.clone()                    # 原位一个实例（位置尺寸同原图）
+            tpl.clone(x=60, width=200)     # 任意变形复用
+        """
+        from .symbol import TemplateElement      # 延迟导入，避免循环依赖
+        box = self.bbox()
+        tpl = TemplateElement(self.board, id_=id_, view_box=view_box)
+        if view_box is None:
+            if box:
+                tpl.node.set("viewBox", "{} {} {} {}".format(
+                    fmt_num(box[0]), fmt_num(box[1]),
+                    fmt_num(box[2] - box[0]), fmt_num(box[3] - box[1])))
+            elif self.board is not None:
+                tpl.node.set("viewBox", "0 0 {} {}".format(
+                    fmt_num(self.board.width), fmt_num(self.board.height)))
+        if self.board is not None and not tpl.node.attribs.get("id"):
+            n = 1
+            while ("template-%d" % n) in self.board._registry:
+                n += 1
+            tpl.set_id("template-%d" % n)
+        self.change_group(tpl)
+        tpl._origin_bbox = box                   # clone() 缺省位置/尺寸用 / default stamp geometry
+        return tpl
+
+    def clone(self: _Self, dx=0, dy=0, id_=None) -> _Self:
         """
         克隆元素（对应中文版 `克隆`），可指定偏移与新 id。 / Clone the element, optionally with an offset and a new id.
 
@@ -1261,12 +1336,28 @@ class Element:
         same.node = new_node
         same.node.element = same        # 新节点绑定到克隆体自身
         same.parent_node = self.parent_node
+        self._copy_mutable_state(same)  # 各复制一份可变内部状态（见该方法说明）
         self.parent_node.add(new_node)
         if id_ and self.board is not None:
             self.board._registry[id_] = same
         return same
 
-    def update(self, **kw) -> _Self:
+    def _copy_mutable_state(self, other):
+        """
+        把「每个元素各自独立」的可变内部状态复制给克隆体（内部方法）。
+
+        ``clone`` 走的是浅拷贝，形如 ``self._cmds``（路径的命令列表）这样的
+        列表会被**两条路径共用**：之后往任一条上继续画，另一条的 ``d`` 也会
+        跟着变。子类覆盖本方法，把这类状态各复制一份。
+
+        默认无状态，什么都不做。
+
+        示例（内部）::
+
+            twin = path.clone(); twin.line_to(300, 200)   # 不影响原路径
+        """
+
+    def update(self: _Self, **kw) -> _Self:
         """
         按需更新元素属性（英文版新增：只改传入的项，其余保持原值）。 / Update only the attributes you pass in; everything else keeps its current value.
 
@@ -1286,7 +1377,7 @@ class Element:
             t = pen.text(100, 80, "标题", font_size=24)
             t.update(font_size=36, bold=True)   # 只改这两项
 
-            img = pen.paste_svg("icon.svg", 10, 10, 120, 80)
+            img = pen.svg_image("icon.svg", 10, 10, 120, 80)
             img.update(width=200)        # 只改宽度
         """
         if hasattr(self, "_update_attrs"):
@@ -1475,3 +1566,8 @@ if __name__ == "__main__":
 # elements.__init__ 保证 base 先于 group 导入，运行时不会触发循环。 / at the bottom solves both. elements.__init__ imports base before group, so no cycle.
 # ---------------------------------------------------------------------------
 from .group import GroupElement  # noqa: E402
+
+# ---------------------------------------------------------------------------
+# 底部导入（续）：to_template() 的返回注解同理引用 TemplateElement。 / Bottom import (cont.): same idea for to_template()'s TemplateElement annotation.
+# ---------------------------------------------------------------------------
+from .symbol import TemplateElement  # noqa: E402

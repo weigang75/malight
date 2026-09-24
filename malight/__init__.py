@@ -22,8 +22,13 @@ malight —— 《神笔码靓》英文版工具包（码靓 / Magic Light）
     6. 运行时多语言 malight.i18n：报错/提示/导出信息**默认英文**，
        `malight.set_language("zh")` 一行切中文（也可用环境变量 MALIGHT_LANG）；
     7. 终端提示带颜色：导出消息整行加粗、**文件路径绿色**（一眼就能找到文件），
-       重定向/管道时自动不上色，也可 `malight.set_color(False)` 关掉
-       （环境变量 NO_COLOR / MALIGHT_COLOR 同样有效）。
+       重定向到文件时自动不上色（PyCharm 等 IDE 运行窗口虽然是管道，但窗口
+       能渲染 ANSI，照样上色），也可 `malight.set_color(False)` 关掉
+       （环境变量 NO_COLOR / MALIGHT_COLOR / FORCE_COLOR 同样有效）。想打一行
+       自己的彩色消息就用 `malight.print_red("失败")`，绿/黄/蓝/紫/青/白/灰
+       各有同名函数（`print_green` / `print_yellow` / `print_blue` /
+       `print_magenta` / `print_cyan` / `print_white` / `print_grey`），要更细的
+       样式用 `malight.print_color(...)`，只想要带色字符串用 `malight.paint(...)`。
 
 快速上手:
     from malight import Malight, Color
@@ -49,7 +54,7 @@ malight —— 《神笔码靓》英文版工具包（码靓 / Magic Light）
     board.fx      —— FilterChain 链式滤镜引擎
     pathkit       —— 路径辅助（看结构、拖锚点与调整点、点位存档）
     ext           —— 扩展机制（@toolkit 注册第三方工具包）
-    tools         —— SVG 导入导出/几何工具/字体工具
+    tools         —— 终端彩色消息/资源查找/SVG 导入导出/几何工具/字体工具
     compat        —— 中文 API 对照与迁移工具
 
 文档 / Docs:
@@ -66,11 +71,22 @@ from malight.i18n import (
     is_chinese, t, available_languages, add_messages,
 )
 
-from malight.fonts import Font, find_font_file, font_face_css, subset_font
+from malight.fonts import (Font, find_font_file, font_face_css, font_link_css,
+                           subset_font, subset_font_bytes)
 
 from malight.page import PageSetup, paper_css
 
-from malight.tools import set_color, color_enabled, paint, asset_path, asset_dir
+from malight.tools import (
+    set_color, color_enabled, paint, asset_path, asset_dir,
+    print_color, print_red, print_green, print_yellow, print_blue,
+    print_magenta, print_cyan, print_white, print_grey,
+)
+
+# 中文别名：沿用中文版《神笔码靓》的名字，方便老脚本直接搬（与上面同一批函数）
+from malight.tools import (
+    打印彩色消息, 打印红色消息, 打印绿色消息, 打印黄色消息, 打印蓝色消息,
+    打印紫色消息, 打印青色消息, 打印白色消息, 打印灰色消息,
+)
 
 from malight.definitions import (
     Color, ColorName, ChalkColor, ColorScheme, SystemFont,
@@ -80,14 +96,14 @@ from malight.definitions import (
     ImageRendering, VectorEffect, ScreenResolution,
     FillRule, DashStyle, BlendMode, FontWeight, TextDecoration,
     LengthAdjust, AspectRatio, SpreadMethod, PaintOrder,
-    PDFMode, PNGMode, DOCXMode, value_of,
+    PDFMode, PNGMode, DOCXMode, FontEmbed, ImageEmbed, value_of,
 )
 
 from malight.elements import (
     Element, CircleElement, EllipseElement, RectElement, LineElement,
     PolylineElement, PolygonElement, TextElement, TextPathElement,
-    ImageElement, SVGImageElement, GroupElement, TemplateElement,
-    UseElement, MarkerElement, ClipPathElement, MaskElement,
+    ImageElement, SVGImageElement, GroupElement, SvgGroupElement,
+    TemplateElement, UseElement, MarkerElement, ClipPathElement, MaskElement,
     LinkElement, PatternElement,
 )
 
@@ -101,7 +117,7 @@ from malight.board import MagicPen, MaLight, Malight, FilterAPI, FilterChain
 
 from malight import ext
 
-__version__ = "2.2.0"
+__version__ = "0.2.0"
 
 __all__ = [
     # 绘图板（MaLight 为正式类名 / 商品名，Malight 兼容旧写法）
@@ -111,8 +127,9 @@ __all__ = [
     # 元素类
     "Element", "CircleElement", "EllipseElement", "RectElement", "LineElement",
     "PolylineElement", "PolygonElement", "TextElement", "TextPathElement",
-    "ImageElement", "SVGImageElement", "GroupElement", "TemplateElement",
-    "UseElement", "MarkerElement", "ClipPathElement", "MaskElement",
+    "ImageElement", "SVGImageElement", "GroupElement", "SvgGroupElement",
+    "TemplateElement", "UseElement", "MarkerElement", "ClipPathElement",
+    "MaskElement",
     "LinkElement", "PatternElement", "PathElement",
     # 路径辅助（英文版新增）
     "PathEditor", "PathPoint", "PathSegment",
@@ -121,7 +138,10 @@ __all__ = [
     # 定义集：颜色
     "Color", "ColorName", "ChalkColor", "ColorScheme",
     # 定义集：字体
-    "Font", "SystemFont", "find_font_file", "font_face_css", "subset_font",
+    "Font", "SystemFont", "find_font_file", "font_face_css", "font_link_css",
+    "subset_font", "subset_font_bytes",
+    # 资源嵌入方式（英文版新增，见 pen.set_embed）
+    "FontEmbed", "ImageEmbed",
     # 定义集：纸张
     "PaperSize", "PaperOrientation", "PaperSettings",
     # 定义集：枚举（枚举 + 字符串双写法）
@@ -136,6 +156,11 @@ __all__ = [
     "reset_language", "is_chinese", "t", "available_languages", "add_messages",
     # 终端颜色（提示更醒目：整体加粗、路径绿色；可一键关掉）
     "set_color", "color_enabled", "paint",
+    # 彩色消息（一行打印醒目提示；另有中文别名 打印红色消息 … 见 tools.py）
+    "print_color", "print_red", "print_green", "print_yellow", "print_blue",
+    "print_magenta", "print_cyan", "print_white", "print_grey",
+    "打印彩色消息", "打印红色消息", "打印绿色消息", "打印黄色消息", "打印蓝色消息",
+    "打印紫色消息", "打印青色消息", "打印白色消息", "打印灰色消息",
     # 包内资源（assets/images 预览图、assets/fonts 字体文件）查找
     "asset_path", "asset_dir",
 ]

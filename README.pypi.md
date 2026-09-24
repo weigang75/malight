@@ -81,6 +81,7 @@ Deeper usage lives in [board/core.en.md](https://github.com/weigang75/malight/bl
 | `pen.textPath(pts, s)` | `<textPath>` | text along a path |
 | `pen.path(...)` | `<path>` | paths (Bézier / arcs / turtle drawing / boolean ops) |
 | `pen.image(file, x, y)` | `<image>` | bitmap (inlined as base64) |
+| `pen.svg_image(file, x, y)` | `<image>` | SVG file: vector, and its text/colours can be edited |
 | `pen.g()` | `<g>` | group |
 | `pen.symbol(id)` + `pen.use(id, x, y)` | `<symbol>` + `<use>` | templates and reuse |
 | `pen.pattern(...)` | `<pattern>` | tiling fill |
@@ -110,8 +111,9 @@ pen = Malight("demo")
 pen.text(50, 60, "enum",  font=Font.SIMHEI)                  # enum
 pen.text(50, 100, "name", font="KaiTi")                      # any installed font name
 pen.text(50, 140, "bold", font=Font.MS_YAHEI, weight=FontWeight.BOLD)
-# A font file (.ttf/.otf/.ttc) is base64-inlined via @font-face, so text
-# survives on machines that lack the font:
+# A font file (.ttf/.otf/.ttc) embeds only the glyphs actually drawn by default
+# (automatic subsetting), so text survives elsewhere and the SVG stays small;
+# see "Fonts and images" below to embed the whole file or link it instead:
 # pen.text(50, 180, "file", font="C:/myfonts/MyFont.ttf")
 
 # Colours: enum (72 common names) + string + RGB all work
@@ -134,6 +136,100 @@ font lookup and embedding: [fonts.en.md](https://github.com/weigang75/malight/bl
 
 General yes/no values also have lowercase constants: `YES` `NO` `ON` `OFF`.
 Your IDE completes them, so there is nothing to memorise.
+
+## Fonts and images: embed or link (`pen.set_embed`)
+
+Local font files and local images are **written into the SVG** by default (they
+survive on any machine), but how much gets written is your choice:
+
+| Asset | Default | Alternatives |
+|---|---|---|
+| Font (`font=<file>`) | `FontEmbed.SUBSET` - only the glyphs actually drawn | `EMBED` the whole file / `LINK` the local path |
+| Image (`pen.image(...)`) | `ImageEmbed.EMBED` - base64 inlined | `LINK` a relative path |
+
+```python
+from malight import Malight, FontEmbed, ImageEmbed, find_font_file
+
+pen = Malight("poster", fonts="link", images="link")   # smallest files
+pen.set_embed(fonts=FontEmbed.SUBSET)                  # back to the default
+
+# No need to repeat the text: at finish() the library scans the glyphs used
+pen.text(300, 100, "MaLight", font=find_font_file("MyFont"),
+         font_size=40, h_align="middle")
+pen.image("assets/bg.jpg", 0, 0, width=600, height=400)   # LINK writes a path
+```
+
+Measured on a 5.6 MB font (`Android.ttf`) drawing 12 characters:
+
+| Mode | Resulting SVG |
+|---|---|
+| `SUBSET` (default) | **4.5 KB** |
+| `EMBED` | 7.5 MB |
+| `LINK` | 0.7 KB |
+
+The price of `LINK`: the font / image file must stay where it is (same machine,
+same folder layout). Copy the SVG alone and you lose the glyphs or the picture.
+Keep the defaults when the file has to travel. Images in `LINK` mode are
+referenced **relative to the SVG folder**, so PNG/PDF export still resolves them.
+
+Full walk-through: `examples/demo_embed.py`; bundled fonts:
+[assets/fonts/README.md](https://github.com/weigang75/malight/blob/main/malight/assets/fonts/README.md).
+
+## Recolouring one SVG file (`pen.svg_image`)
+
+`pen.image()` pastes an SVG as a **bitmap**: the contents sit inside base64 and
+cannot be touched. `pen.svg_image()` reads the source text into the element, so
+you can edit it — colours included:
+
+```python
+icon = pen.svg_image("assets/icons/mark.svg", x=40, y=40, width=60)
+icon.svg_colors()                           # ['#ffffff', '#4dabf7']: what the file really uses
+icon.replace_color("#ffffff", "#ff0000")    # white -> red (#fff / white all match)
+icon.replace_text("circle", "ellipse")      # plain text replacement
+
+# one file, three colours: each element edits its own copy
+for i, color in enumerate(("#e63946", "#2a9d8f", "#1d3557")):
+    pen.svg_image("assets/icons/mark.svg", x=40 + i * 90, y=200,
+                  width=70).replace_color("white", color)
+```
+
+`replace_color` swaps by **colour**, not by raw text: `#ffffff` / `#FFF` /
+`rgb(255,255,255)` / `white` all mean the same thing and match at once, while
+identifiers such as `id="orange"` stay untouched. A colour the file does not
+actually use is reported together with the colours it does use, instead of
+silently changing nothing.
+
+### Taking an SVG apart (`import_svg_as_group` / `import_svg_as_symbol`)
+
+Recolouring belongs to the SVG image element above, the one that carries its own
+text. When you want to **take an SVG apart** and edit it shape by shape, use
+these two entry points instead: they hand you **nodes**.
+
+```python
+g = pen.import_svg_as_group("assets/icons/mark.svg", x=40, y=40, scale=0.5)
+g.bbox()                              # it is a real group: geometry included
+g.translate(10, 0)
+for node in g.walk():                 # walk every node and edit any attribute
+    print(node.tag, node.attribs.get("fill"))
+```
+
+They carry **no recolour methods**: colour is a property of a graphic, not of
+the idea of grouping. Recolour through the tools functions on the node instead
+(`<style>` blocks included):
+
+```python
+from malight.tools import replace_svg_node_color, svg_node_colors
+
+svg_node_colors(g.node)               # ['#ffffff', '#4dabf7']
+replace_svg_node_color(g.node, "white", "#ff0000")
+
+tpl = pen.import_svg_as_symbol("assets/icons/mark.svg", id_="mark")
+replace_svg_node_color(tpl.node, "white", "#ff0000")   # one edit, every <use> changes
+pen.use("mark", x=200, y=40, width=80, height=60)
+```
+
+When each copy needs its own colours, keep using `pen.svg_image()` — a template
+is by definition "edit once, change everywhere".
 
 ## Switchable language at runtime (English by default)
 
@@ -241,6 +337,7 @@ is rebuilt by the same script.
 | [polygon](https://github.com/weigang75/malight/blob/main/malight/elements/polygon.en.md) | PolygonElement, created by pen.polygon. |
 | [polyline](https://github.com/weigang75/malight/blob/main/malight/elements/polyline.en.md) | PolylineElement, created by pen.polyline. |
 | [rect](https://github.com/weigang75/malight/blob/main/malight/elements/rect.en.md) | RectElement, created by pen.rect. |
+| [svggroup](https://github.com/weigang75/malight/blob/main/malight/elements/svggroup.en.md) | SvgGroupElement: an SVG file imported as an editable group. |
 | [svgimage](https://github.com/weigang75/malight/blob/main/malight/elements/svgimage.en.md) | SVGImageElement: embed another SVG file as an image. |
 | [symbol](https://github.com/weigang75/malight/blob/main/malight/elements/symbol.en.md) | TemplateElement: define a reusable symbol. |
 | [text](https://github.com/weigang75/malight/blob/main/malight/elements/text.en.md) | TextElement, created by pen.text. |

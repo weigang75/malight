@@ -16,10 +16,10 @@ if __name__ == "__main__" and not __package__:
         _os.path.abspath(__file__)))))
     __package__ = "malight.elements"
 
-from .base import Element, _paint, _fmt_points, _fmt_transform, _Self
+from .base import Element, _paint, _fmt_points, _fmt_transform
 
 
-class MaskElement(Element):
+class MaskElement(Element["MaskElement"]):
     """
     遮罩元素（<mask>，对应中文版 `遮罩元素`）：按亮度控制可见度。 / Mask element controlling visibility by luminance.
 
@@ -31,15 +31,18 @@ class MaskElement(Element):
     """
 
     def __init__(self, board, mask_shape=None, targets=None, units=None,
-                 content_units=None, id_=None):
+                 content_units=None, id_=None, **kw):
         super().__init__(board, board.defs_node, tag="mask")
         self._update_attrs(mask_shape=mask_shape, units=units,
-                           content_units=content_units, id_=id_)
+                           content_units=content_units, id_=id_, **kw)
         self.apply_to(targets)
 
-    def _update_attrs(self, mask_shape=None, units=None, content_units=None, id_=None):
+    def _update_attrs(self, mask_shape=None, units=None, content_units=None, id_=None,
+                      **kw):
         """写入 mask 属性并挂载遮罩形状（内部方法）。"""
         self._apply_common({"id_": id_ or Element._next_id("mask")})
+        self._apply_common(kw)      # 公共样式照常落地（英文版修正：以前直接 TypeError）
+        self._apply_paint(kw)       # 填充/描边会被遮罩形状继承
         self.node.set("maskUnits", units or "objectBoundingBox")
         self.node.set("maskContentUnits", content_units or "userSpaceOnUse")
         if mask_shape is not None and hasattr(mask_shape, "remove"):
@@ -48,7 +51,7 @@ class MaskElement(Element):
             mask_shape.parent_node = self.node
             self.node.add(node)
 
-    def apply_to(self, targets) -> _Self:
+    def apply_to(self, targets) -> "MaskElement":
         """把遮罩应用到目标元素。 / Apply the mask to a target element. 示例:: m.apply_to(img)"""
         if targets is None:
             return self
@@ -57,6 +60,46 @@ class MaskElement(Element):
         for t in targets:
             t.node.set("mask", f"url(#{self.node.attribs['id']})")
         return self
+
+    # ------------------------------------------------------------------
+    # 参数访问器（显式方法，与动态合成的 set_/get_ 等价）。 / Parameter accessors, written out explicitly; identical to the
+    # 展开成真实方法是为了让 IDE 能补全、拼错能报错。 / dynamically synthesized set_/get_. Real methods so the IDE completes them and flags typos.
+    # 本区块由 tools/gen_attr_accessors.py 依 _update_attrs 生成。 / Generated from the _update_attrs signature by tools/gen_attr_accessors.py.
+    # 手改会被 `python tools/gen_attr_accessors.py --check` 判为不同步。 / Hand edits make that check report it as out of sync.
+    # ------------------------------------------------------------------
+    # >>> gen_attr_accessors: begin (generated, do not edit by hand)
+    def set_mask_shape(self, value) -> "MaskElement":
+        """设置 mask_shape（等价 ``update(mask_shape=value)``）。 / Set mask_shape; the same as ``update(mask_shape=value)``."""
+        return self.update(mask_shape=value)
+
+    def get_mask_shape(self) -> object:
+        """读取 mask_shape 的当前属性值。 / Read the current raw mask_shape attribute."""
+        return self._get_attr_value("mask_shape")
+
+    def set_units(self, value) -> "MaskElement":
+        """设置 units（等价 ``update(units=value)``）。 / Set units; the same as ``update(units=value)``."""
+        return self.update(units=value)
+
+    def get_units(self) -> object:
+        """读取 units 的当前属性值。 / Read the current raw units attribute."""
+        return self._get_attr_value("units")
+
+    def set_content_units(self, value) -> "MaskElement":
+        """设置 content_units（等价 ``update(content_units=value)``）。 / Set content_units; the same as ``update(content_units=value)``."""
+        return self.update(content_units=value)
+
+    def get_content_units(self) -> object:
+        """读取 content_units 的当前属性值。 / Read the current raw content_units attribute."""
+        return self._get_attr_value("content_units")
+
+    def set_id_(self, value) -> "MaskElement":
+        """设置 id_（等价 ``update(id_=value)``）。 / Set id_; the same as ``update(id_=value)``."""
+        return self.update(id_=value)
+
+    def get_id_(self) -> object:
+        """读取 id_ 的当前属性值。 / Read the current raw id_ attribute."""
+        return self._get_attr_value("id_")
+    # <<< gen_attr_accessors: end
 
 # ===========================================================================
 # 使用示例

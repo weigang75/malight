@@ -240,7 +240,7 @@ class Font(str, Enum):
         return f.name if f is not None else font_value
 
 
-def font_face_css(font_file, family=None):
+def font_face_css(font_file, family=None, data=None):
     """
     生成字体文件的内嵌 @font-face CSS（把字体 base64 塞进 SVG）。 / Build the embedded @font-face CSS for a font file, base64-encoding the font into the SVG.
 
@@ -248,6 +248,8 @@ def font_face_css(font_file, family=None):
 
     :param font_file: 字体文件路径
     :param family: 自定义族名（默认用 Font.family_of 生成）
+    :param data: 直接给的字体字节；给了就不再读 ``font_file``
+                 （自动子集化的结果走这里，字体只在内存里过一遍、不落盘）
     :return: (family 名, CSS 文本)
     :raises FileNotFoundError: 字体文件不存在（附带排查提示）
 
@@ -262,15 +264,40 @@ def font_face_css(font_file, family=None):
     fmt = _FORMAT_BY_EXT.get(ext, "truetype")
     mime = {"woff": "font/woff", "woff2": "font/woff2",
             "eot": "application/vnd.ms-fontobject"}.get(ext.lstrip("."), "font/ttf")
-    with open(font_file, "rb") as f:
-        b64 = base64.b64encode(f.read()).decode()
+    if data is None:
+        with open(font_file, "rb") as f:
+            data = f.read()
+    b64 = base64.b64encode(data).decode()
     family = family or Font.family_of(font_file)
     css = ("@font-face { font-family: '" + family + "'; src: url(data:" + mime +
            ";base64," + b64 + ") format('" + fmt + "'); }")
     return family, css
 
 
-def subset_font(font_file, text, out_file=None):
+def font_link_css(font_file, family=None):
+    """
+    生成「不内嵌、只引用本地字体文件」的 @font-face CSS。 / Build a non-embedding @font-face CSS that points at the local font file.
+
+    给 ``FontEmbed.LINK`` 模式用：SVG 只是一句 ``url("file:///…/x.ttf")``，
+    体积最小；只要字体路径不变（同一台电脑 / 同一套目录结构）就能正常显示，
+    换电脑或挪走字体就会掉字。 / Used by ``FontEmbed.LINK``: the smallest option,
+    valid only while the font file stays where it is.
+
+    :return: (family 名, CSS 文本)
+
+    示例::
+        family, css = font_link_css(r"C:\\Windows\\Fonts\\simkai.ttf")
+    """
+    ext = os.path.splitext(str(font_file))[1].lower()
+    fmt = _FORMAT_BY_EXT.get(ext, "truetype")
+    family = family or Font.family_of(font_file)
+    uri = "file:///" + os.path.abspath(str(font_file)).replace("\\", "/")
+    css = ("@font-face { font-family: '" + family + "'; src: url(\"" + uri +
+           "\") format('" + fmt + "'); }")
+    return family, css
+
+
+def subset_font(font_file, text, out_file=None, quiet=False):
     """
     按实际用到的文字对字体文件做子集化（需要 fontTools），大幅减小内嵌体积。 / Subset a font file to the characters actually used (requires fontTools), which shrinks embedded output a lot.
 
@@ -280,27 +307,96 @@ def subset_font(font_file, text, out_file=None):
     :param font_file: 原始字体文件
     :param text: 用到的全部文字（把所有要显示的字拼成一个字符串）
     :param out_file: 输出文件（默认原名加 ``_subset``）
+    :param quiet: True 不打印完成提示（自动子集化时用，避免刷屏）
     :return: 子集字体文件路径
 
     示例::
         sub = subset_font(r"C:\\Windows\\Fonts\\simkai.ttf", "你好世界 ABC")
         pen.text(100, 100, "你好世界 ABC", font=sub)     # 内嵌体积小很多
+
+    说明：一般**不用手动调用** —— ``font=字体文件`` 时默认就会按画面上实际
+    用到的字自动子集化（见 ``FontEmbed.SUBSET``）。
     """
     try:
-        from fontTools import subset
+        from fontTools import subset          # noqa: F401  （缺失时给友好提示）
     except ImportError:
         raise NotImplementedError(t("err.need_fonttools_subset"))
     if out_file is None:
         base, ext = os.path.splitext(str(font_file))
         out_file = "{}_subset{}".format(base, ext or ".ttf")
-    args = [str(font_file), "--text={}".format(text), "--output-file={}".format(out_file),
-            "--layout-features=*", "--no-hinting", "--desubroutinize"]
-    subset.main(args)
-    print(t("info.font_subset_done",
-                src=os.path.basename(str(font_file)),
-                dst=os.path.abspath(out_file),
-                size="%.1f KB" % (os.path.getsize(out_file) / 1024.0)))
+    _subset_to_file(font_file, text, out_file)
+    if not quiet:
+        print(t("info.font_subset_done",
+                    src=os.path.basename(str(font_file)),
+                    dst=os.path.abspath(out_file),
+                    size="%.1f KB" % (os.path.getsize(out_file) / 1024.0)))
     return os.path.abspath(out_file)
+
+
+def _subset_to_file(font_file, text, out_file):
+    """
+    子集化落盘（内部方法）：优先走 fontTools 的 Python API，失败才退回 CLI。 / Internal: subset a font to a file, via the fontTools Python API with a CLI fallback.
+
+    为什么不用 ``subset.main()``：那条 CLI 入口会调用 ``configLogger()``，
+    它先把 ``fontTools`` 及其子 logger 全部重置，用户/库设置的日志级别会被冲掉，
+    而且它会为「不认识就丢掉」的表（FFTM 之类）打 WARNING 刷屏。Python API
+    等价、更安静也更快。
+    """
+    from fontTools import subset
+    # 子集化本来就要丢掉「不认识」的表（FFTM 之类），fontTools 会为此打
+    # WARNING；临时压到 ERROR 再恢复，不污染使用者的 logging 配置。
+    import logging
+    ft_log = logging.getLogger("fontTools.subset")
+    prev_level = ft_log.level
+    ft_log.setLevel(logging.ERROR)
+    try:
+        options = subset.Options()
+        options.layout_features = ["*"]
+        options.hinting = False
+        options.desubroutinize = True
+        font = subset.load_font(str(font_file), options)
+        try:
+            subsetter = subset.Subsetter(options=options)
+            subsetter.populate(text=text)
+            subsetter.subset(font)
+            subset.save_font(font, out_file, options)
+        finally:
+            font.close()
+    except Exception:
+        # API 不可用（fontTools 版本差异）：退回 CLI 入口，功能优先
+        subset.main([str(font_file), "--text={}".format(text),
+                     "--output-file={}".format(out_file),
+                     "--layout-features=*", "--no-hinting", "--desubroutinize"])
+    finally:
+        ft_log.setLevel(prev_level)
+
+
+def subset_font_bytes(font_file, text):
+    """
+    子集化并**返回字节**（不落盘、不打印，内部方法）。 / Subset a font and return the bytes without touching disk; internal helper.
+
+    给 ``FontEmbed.SUBSET`` 的自动内嵌用：字体文件只在内存里过一遍，
+    输出 SVG 里直接就是子集后的 base64，不会在用户目录里留 ``_subset`` 文件。
+
+    :param font_file: 原始字体文件
+    :param text: 用到的全部文字
+    :return: 子集字体的字节（TTF）；需 fontTools，缺失时抛 NotImplementedError
+
+    示例（内部）::
+        data = subset_font_bytes("simkai.ttf", "神笔码靓")
+    """
+    import tempfile
+    fd, tmp = tempfile.mkstemp(suffix=".ttf", prefix="malight_subset_")
+    os.close(fd)
+    try:
+        subset_font(font_file, text, out_file=tmp, quiet=True)
+        with open(tmp, "rb") as f:
+            return f.read()
+    finally:
+        try:
+            os.remove(tmp)
+        except OSError:
+            pass
 
 
 def font_search_dirs() -> list:

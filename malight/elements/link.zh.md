@@ -18,6 +18,12 @@ LinkElement 元素（每类一文件，含中文注释与示例）。
 | 方法 | 说明 |
 |---|---|
 | `wrap(el)` | 把元素包进链接（对应中文版 `创建链接` 的主体逻辑）。 |
+| `set_href(value)` | 设置 href（等价 `update(href=value)`）。 |
+| `get_href()` | 读取 href 的当前属性值。 |
+| `set_tooltip(value)` | 设置 tooltip（等价 `update(tooltip=value)`）。 |
+| `get_tooltip()` | 读取 tooltip 的当前属性值。 |
+| `set_description(value)` | 设置 description（等价 `update(description=value)`）。 |
+| `get_description()` | 读取 description 的当前属性值。 |
 
 ---
 
@@ -85,4 +91,4 @@ if __name__ == "__main__":
 
 ## 同级模块
 
-[base](base.zh.md) ｜ [circle](circle.zh.md) ｜ [clippath](clippath.zh.md) ｜ [ellipse](ellipse.zh.md) ｜ [group](group.zh.md) ｜ [image](image.zh.md) ｜ [line](line.zh.md) ｜ [marker](marker.zh.md) ｜ [mask](mask.zh.md) ｜ [path](path.zh.md) ｜ [pattern](pattern.zh.md) ｜ [polygon](polygon.zh.md) ｜ [polyline](polyline.zh.md) ｜ [rect](rect.zh.md) ｜ [svgimage](svgimage.zh.md) ｜ [symbol](symbol.zh.md) ｜ [text](text.zh.md) ｜ [textpath](textpath.zh.md) ｜ [use](use.zh.md)
+[base](base.zh.md) ｜ [circle](circle.zh.md) ｜ [clippath](clippath.zh.md) ｜ [ellipse](ellipse.zh.md) ｜ [group](group.zh.md) ｜ [image](image.zh.md) ｜ [line](line.zh.md) ｜ [marker](marker.zh.md) ｜ [mask](mask.zh.md) ｜ [path](path.zh.md) ｜ [pattern](pattern.zh.md) ｜ [polygon](polygon.zh.md) ｜ [polyline](polyline.zh.md) ｜ [rect](rect.zh.md) ｜ [svggroup](svggroup.zh.md) ｜ [svgimage](svgimage.zh.md) ｜ [symbol](symbol.zh.md) ｜ [text](text.zh.md) ｜ [textpath](textpath.zh.md) ｜ [use](use.zh.md)

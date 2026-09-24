@@ -18,6 +18,24 @@ Bitmap image element.
 | Method | Description |
 |---|---|
 | `bbox()` | Bounding box. |
+| `set_href(value)` | Set href; the same as `update(href=value)`. |
+| `get_href()` | Read the current raw href attribute. |
+| `set_x(value)` | Set x; the same as `update(x=value)`. |
+| `get_x()` | Read the current raw x attribute. |
+| `set_y(value)` | Set y; the same as `update(y=value)`. |
+| `get_y()` | Read the current raw y attribute. |
+| `set_width(value)` | Set width; the same as `update(width=value)`. |
+| `get_width()` | Read the current raw width attribute. |
+| `set_height(value)` | Set height; the same as `update(height=value)`. |
+| `get_height()` | Read the current raw height attribute. |
+| `set_aspect(value)` | Set aspect; the same as `update(aspect=value)`. |
+| `get_aspect()` | Read the current raw aspect attribute. |
+| `set_rendering(value)` | Set rendering; the same as `update(rendering=value)`. |
+| `get_rendering()` | Read the current raw rendering attribute. |
+| `set_external(value)` | Set external; the same as `update(external=value)`. |
+| `get_external()` | Read the current raw external attribute. |
+| `set_embed(value)` | Set embed; the same as `update(embed=value)`. |
+| `get_embed()` | Read the current raw embed attribute. |
 
 ---
 
@@ -96,4 +114,4 @@ if __name__ == "__main__":
 
 ## Sibling modules
 
-[base](base.en.md) ｜ [circle](circle.en.md) ｜ [clippath](clippath.en.md) ｜ [ellipse](ellipse.en.md) ｜ [group](group.en.md) ｜ [line](line.en.md) ｜ [link](link.en.md) ｜ [marker](marker.en.md) ｜ [mask](mask.en.md) ｜ [path](path.en.md) ｜ [pattern](pattern.en.md) ｜ [polygon](polygon.en.md) ｜ [polyline](polyline.en.md) ｜ [rect](rect.en.md) ｜ [svgimage](svgimage.en.md) ｜ [symbol](symbol.en.md) ｜ [text](text.en.md) ｜ [textpath](textpath.en.md) ｜ [use](use.en.md)
+[base](base.en.md) ｜ [circle](circle.en.md) ｜ [clippath](clippath.en.md) ｜ [ellipse](ellipse.en.md) ｜ [group](group.en.md) ｜ [line](line.en.md) ｜ [link](link.en.md) ｜ [marker](marker.en.md) ｜ [mask](mask.en.md) ｜ [path](path.en.md) ｜ [pattern](pattern.en.md) ｜ [polygon](polygon.en.md) ｜ [polyline](polyline.en.md) ｜ [rect](rect.en.md) ｜ [svggroup](svggroup.en.md) ｜ [svgimage](svgimage.en.md) ｜ [symbol](symbol.en.md) ｜ [text](text.en.md) ｜ [textpath](textpath.en.md) ｜ [use](use.en.md)

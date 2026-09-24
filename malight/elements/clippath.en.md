@@ -18,6 +18,12 @@ Clip-path element.
 | Method | Description |
 |---|---|
 | `apply_to(targets)` | Apply the clip to one target element or a list of them. |
+| `set_clip_shape(value)` | Set clip_shape; the same as `update(clip_shape=value)`. |
+| `get_clip_shape()` | Read the current raw clip_shape attribute. |
+| `set_units(value)` | Set units; the same as `update(units=value)`. |
+| `get_units()` | Read the current raw units attribute. |
+| `set_id_(value)` | Set id_; the same as `update(id_=value)`. |
+| `get_id_()` | Read the current raw id_ attribute. |
 
 ---
 
@@ -87,4 +93,4 @@ if __name__ == "__main__":
 
 ## Sibling modules
 
-[base](base.en.md) ｜ [circle](circle.en.md) ｜ [ellipse](ellipse.en.md) ｜ [group](group.en.md) ｜ [image](image.en.md) ｜ [line](line.en.md) ｜ [link](link.en.md) ｜ [marker](marker.en.md) ｜ [mask](mask.en.md) ｜ [path](path.en.md) ｜ [pattern](pattern.en.md) ｜ [polygon](polygon.en.md) ｜ [polyline](polyline.en.md) ｜ [rect](rect.en.md) ｜ [svgimage](svgimage.en.md) ｜ [symbol](symbol.en.md) ｜ [text](text.en.md) ｜ [textpath](textpath.en.md) ｜ [use](use.en.md)
+[base](base.en.md) ｜ [circle](circle.en.md) ｜ [ellipse](ellipse.en.md) ｜ [group](group.en.md) ｜ [image](image.en.md) ｜ [line](line.en.md) ｜ [link](link.en.md) ｜ [marker](marker.en.md) ｜ [mask](mask.en.md) ｜ [path](path.en.md) ｜ [pattern](pattern.en.md) ｜ [polygon](polygon.en.md) ｜ [polyline](polyline.en.md) ｜ [rect](rect.en.md) ｜ [svggroup](svggroup.en.md) ｜ [svgimage](svgimage.en.md) ｜ [symbol](symbol.en.md) ｜ [text](text.en.md) ｜ [textpath](textpath.en.md) ｜ [use](use.en.md)

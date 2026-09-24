@@ -17,9 +17,11 @@ class DebugMixin:
     """DebugMixin —— 调试辅助（网格/图框/测距/关键点）（方法名与 SVG 元素名对应，旧名保留为别名）。 / DebugMixin - debugging helpers (grids, frames, measurements, key points). """
 
     def measure(self, p1, p2, color=None, font_size=16, bg_color=None,
-                     line_width=3, decimals=2, id_=None) -> GroupElement:
+                     line_width=3, decimals=2, id_=None, **kw) -> GroupElement:
         """
         两点间测距标注（对应中文版 `测距`，调试用）。 / Annotate the distance between two points.
+
+        :param kw: 组的公共样式参数（opacity / blend_mode / filter 等）
 
         示例::
             pen.draw_measure((50, 50), (350, 150))
@@ -29,7 +31,7 @@ class DebugMixin:
         x2, y2 = p2
         dist = math.hypot(x2 - x1, y2 - y1)
         mx, my = (x1 + x2) / 2, (y1 + y2) / 2
-        g = self.g(id_=id_)
+        g = self.g(id_=id_, **kw)
         self.line(p1, p2, stroke_color=color, stroke_width=line_width,
                        stroke_style="6 4").change_group(g)
         label = f"{dist:.{decimals}f}"
@@ -43,14 +45,17 @@ class DebugMixin:
         t.change_group(g)
         return g
 
-    def grid(self, spacing=20, color="#b0c4de", opacity=0.6, id_=None) -> GroupElement:
+    def grid(self, spacing=20, color="#b0c4de", opacity=0.6, id_=None,
+             **kw) -> GroupElement:
         """
         显示网格（对应中文版 `显示网格`，调试用）。 / Draw a grid.
+
+        :param kw: 组的公共样式参数（blend_mode / filter 等）
 
         示例::
             pen.grid(40)
         """
-        g = self.g(id_=id_)
+        g = self.g(id_=id_, **kw)
         n_x = int(self.width // spacing) + 1
         n_y = int(self.height // spacing) + 1
         for i in range(n_x):
@@ -65,28 +70,31 @@ class DebugMixin:
             ln.change_group(g)
         return g
 
-    def frame(self, color="#ff6347", stroke_width=1) -> RectElement:
+    def frame(self, color="#ff6347", stroke_width=1, id_=None, **kw) -> RectElement:
         """
         显示画布边框（对应中文版 `显示图框`，调试用）。 / Draw the canvas frame.
+
+        :param kw: 矩形描边/公共样式参数（opacity / dash_offset 等）
 
         示例::
             pen.show_frame()
         """
         return self.rect(0, 0, self.width, self.height,
                               stroke_color=color, stroke_width=stroke_width,
-                              fill_color=Color.TRANSPARENT)
+                              fill_color=Color.TRANSPARENT, id_=id_, **kw)
 
     def mark_point(self, x, y, color=Color.RED, style=PointStyle.CROSS,
-                   font_size=12, label=None, id_=None) -> GroupElement:
+                   font_size=12, label=None, id_=None, **kw) -> GroupElement:
         """
         画定位点标记（对应中文版 `定位点`/`定位坐标`，调试用）。 / Draw a point marker.
 
         :param style: PointStyle 十字/空圆/实圆/空方/实方
+        :param kw: 组的公共样式参数（opacity / blend_mode / filter 等）
 
         示例::
             pen.mark_point(200, 150, label="(200,150)")
         """
-        g = self.g(id_=id_)
+        g = self.g(id_=id_, **kw)
         s = 5
         if style == PointStyle.CROSS:
             self.cross(x, y, width=s, height=s, color=color).change_group(g)
@@ -106,14 +114,16 @@ class DebugMixin:
             t.change_group(g)
         return g
 
-    def key_points(self, points, color=Color.BLACK) -> GroupElement:
+    def key_points(self, points, color=Color.BLACK, id_=None, **kw) -> GroupElement:
         """
         批量显示关键点坐标（对应中文版 `显示关键点`，调试用）。 / Label the coordinates of several key points.
+
+        :param kw: 组的公共样式参数（opacity / blend_mode / filter 等）
 
         示例::
             pen.show_key_points([(50, 50), (200, 80), (350, 120)])
         """
-        g = self.g()
+        g = self.g(id_=id_, **kw)
         for i, pt in enumerate(points):
             self.mark_point(pt[0], pt[1], color=color,
                             label=f"{i}:({fmt_num(pt[0])},{fmt_num(pt[1])})").change_group(g)

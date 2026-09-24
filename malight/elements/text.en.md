@@ -50,6 +50,10 @@ Text element.
 | `set_length_adjust(adjust)` | Set lengthAdjust (pairs with text_length). |
 | `get_length_adjust()` | Read the current raw lengthAdjust attribute. |
 | `bbox()` | Estimate the bounding box from font size times character count; exact width needs rendering. |
+| `set_x(value)` | Set x; the same as `update(x=value)`. |
+| `get_x()` | Read the current raw x attribute. |
+| `set_y(value)` | Set y; the same as `update(y=value)`. |
+| `get_y()` | Read the current raw y attribute. |
 
 ---
 
@@ -153,4 +157,4 @@ if __name__ == "__main__":
 
 ## Sibling modules
 
-[base](base.en.md) ｜ [circle](circle.en.md) ｜ [clippath](clippath.en.md) ｜ [ellipse](ellipse.en.md) ｜ [group](group.en.md) ｜ [image](image.en.md) ｜ [line](line.en.md) ｜ [link](link.en.md) ｜ [marker](marker.en.md) ｜ [mask](mask.en.md) ｜ [path](path.en.md) ｜ [pattern](pattern.en.md) ｜ [polygon](polygon.en.md) ｜ [polyline](polyline.en.md) ｜ [rect](rect.en.md) ｜ [svgimage](svgimage.en.md) ｜ [symbol](symbol.en.md) ｜ [textpath](textpath.en.md) ｜ [use](use.en.md)
+[base](base.en.md) ｜ [circle](circle.en.md) ｜ [clippath](clippath.en.md) ｜ [ellipse](ellipse.en.md) ｜ [group](group.en.md) ｜ [image](image.en.md) ｜ [line](line.en.md) ｜ [link](link.en.md) ｜ [marker](marker.en.md) ｜ [mask](mask.en.md) ｜ [path](path.en.md) ｜ [pattern](pattern.en.md) ｜ [polygon](polygon.en.md) ｜ [polyline](polyline.en.md) ｜ [rect](rect.en.md) ｜ [svggroup](svggroup.en.md) ｜ [svgimage](svgimage.en.md) ｜ [symbol](symbol.en.md) ｜ [textpath](textpath.en.md) ｜ [use](use.en.md)

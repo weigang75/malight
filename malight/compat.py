@@ -120,7 +120,7 @@ METHOD_MAP = {
     "复制元素": "copy", "创建链接": "a",
     "创建标记": "marker", "获取元素": "get_element",
     # 图像
-    "贴图": "image", "SVG贴图": "paste_svg",
+    "贴图": "image", "SVG贴图": "svg_image",
     "导入SVG为组": "import_svg_as_group", "导入SVG为模板": "import_svg_as_symbol",
     # 排列重复
     "水平排列": "arrange_horizontal", "垂直排列": "arrange_vertical",
@@ -165,6 +165,15 @@ PATH_METHOD_MAP = {
     "前进直线": "forward", "后退直线": "backward", "倒圆角直线": "fillet",
     "获取路径d": "get_d", "原生path": "set_d", "路径点列表": "to_point_list",
     "路径长度": "length", "位置坐标": "point_at",
+}
+
+# ---------------------------------------------------------------------------
+# 元素方法映射：中文元素方法 -> 英文元素方法
+# ---------------------------------------------------------------------------
+ELEMENT_METHOD_MAP = {
+    # 中文版只有 SVG图元素（图片通道）有「颜色替换」，英文版图片 / 节点树 /
+    # 模板三条路都能换色，方法同名。
+    "颜色替换": "replace_color",
 }
 
 # ---------------------------------------------------------------------------
@@ -243,6 +252,10 @@ def print_mapping(name):
     if name in PATH_METHOD_MAP:
         print(f"{name} -> PathElement.{PATH_METHOD_MAP[name]}")
         return
+    if name in ELEMENT_METHOD_MAP:
+        print(f"{name} -> {ELEMENT_METHOD_MAP[name]}"
+              "（SVGImageElement / SvgNode / TemplateElement）")
+        return
     print(t("compat.no_mapping", name=name))
 
 
@@ -301,6 +314,7 @@ def migrate(source, target=None):
                                "pen", _sub_word_code[0])
     _sub_word(METHOD_MAP)
     _sub_word(PATH_METHOD_MAP)
+    _sub_word(ELEMENT_METHOD_MAP)
     # 4) 关键字参数（长键优先，如 画布宽 须先于 宽 替换）
     for k in sorted(KWARG_MAP, key=len, reverse=True):
         _sub_word_code[0] = re.sub(

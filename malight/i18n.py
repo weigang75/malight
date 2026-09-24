@@ -195,11 +195,22 @@ _CATALOGUE["en"] = {
 
     # ---- 一般提示 / notices ----
     "info.font_subset_done": "[malight] font subset done: {src} -> {dst}  [{size}]",
-    "info.font_embedded": ("[malight] note: font file {name} ({mb:.1f} MB) embedded — "
-                           "the SVG grows accordingly. For a smaller file, use a subset "
-                           "font (fontTools subset) or a .woff2 font."),
+    "info.font_subset_auto": ("[malight] font auto-subset: {name} {before} -> {after} "
+                              "({n} chars drawn)"),
+    "info.font_subset_fallback": ("[malight] fontTools not found; embedded the whole font "
+                                  "{name} instead. Install it for automatic subsetting: "
+                                  "pip install fonttools"),
+    "info.font_linked": ("[malight] font linked, not embedded: {name} — the SVG keeps "
+                         "working only while that font file stays where it is"),
+    "info.image_linked": ("[malight] image linked, not embedded: {name} — the SVG only "
+                          "shows it while the file stays at that path"),
+    "info.font_embedded": ("[malight] note: font file {name} ({mb:.1f} MB) embedded in "
+                           "full — the SVG grows accordingly. Use fonts=\"subset\" (the "
+                           "default) to embed only the glyphs actually drawn."),
     "info.png_fallback_chrome": ("[malight] cairosvg not found; falling back to headless "
                                  "Chrome for PNG (better SVG filter support)"),
+    "info.svg_replace_none": ("[malight] nothing replaced: no colour matches "
+                              "{old}. Colours found: {colors}"),
 
     # ---- 代码迁移工具 / compat migrator ----
     "compat.migrated": "migration done -> {target}",
@@ -221,6 +232,19 @@ _CATALOGUE["en"] = {
         "  1) pip install cairosvg\n"
         "  2) install Chrome / Edge, or set the MALIGHT_CHROME environment variable "
         "to chrome.exe"),
+
+    # ---- SVG 文本改写 / SVG text rewriting ----
+    "err.svg_color_empty": (
+        "a colour must be a non-empty value: a name such as \"white\" / \"teal\", "
+        "or a hex string such as \"#ffffff\""),
+    "err.svg_unknown_color": (
+        "unknown colour: {color} — use a name such as \"white\" / \"teal\", "
+        "or a hex string such as \"#ffffff\""),
+    "err.svg_no_source": (
+        "svg_image() needs either svg_file= (a path) or svg_text= (the source text)"),
+    "err.svg_group_no_file": (
+        "import_svg_as_group() needs the SVG file path as its first argument, "
+        "e.g. pen.import_svg_as_group(\"icon.svg\", x=10, y=10)"),
 
     # ---- 滤镜 / filters ----
     "err.attr_no_dynamic": (
@@ -363,11 +387,20 @@ _CATALOGUE["zh"] = {
 
     # ---- 一般提示 ----
     "info.font_subset_done": "[malight] 字体子集化完成：{src} -> {dst}  [{size}]",
-    "info.font_embedded": ("[malight] 提示：已内嵌字体文件 {name}（{mb:.1f} MB），"
-                           "SVG 体积会相应变大；如需小体积，建议改用子集化字体"
-                           "（fontTools subset）或 .woff2 字体。"),
+    "info.font_subset_auto": "[malight] 字体已按用字自动子集化：{name} {before} -> {after}（用到 {n} 个字）",
+    "info.font_subset_fallback": ("[malight] 未安装 fontTools，改为整份内嵌字体 {name}；"
+                                  "想自动子集化请：pip install fonttools"),
+    "info.font_linked": ("[malight] 字体只引用未内嵌：{name} —— 复制 SVG 时请保持字体"
+                         "文件路径不变（想随文件走就用 fonts=\"subset\" 内嵌）"),
+    "info.image_linked": ("[malight] 图片只引用未内嵌：{name} —— 图片文件保持在原路径"
+                          "才能正常显示"),
+    "info.font_embedded": ("[malight] 提示：字体文件 {name}（{mb:.1f} MB）整份内嵌，"
+                           "SVG 体积会相应变大；默认的 fonts=\"subset\" 只内嵌画面上"
+                           "实际用到的字。"),
     "info.png_fallback_chrome": ("[malight] 未检测到 cairosvg，自动改用无头 Chrome 导出 PNG"
                                  "（对 SVG 滤镜的支持更好）"),
+    "info.svg_replace_none": ("[malight] 什么都没换到：没有与 {old} 匹配的颜色。"
+                              "找到的颜色：{colors}"),
 
     # ---- 代码迁移工具 ----
     "compat.migrated": "迁移完成 -> {target}",
@@ -387,6 +420,19 @@ _CATALOGUE["zh"] = {
         "导出 PNG 需要 cairosvg 或 Chrome，两者都没找到。\n"
         "  1) pip install cairosvg\n"
         "  2) 安装 Chrome / Edge，或设置环境变量 MALIGHT_CHROME 指向 chrome.exe"),
+
+    # ---- SVG 文本改写 ----
+    "err.svg_color_empty": (
+        "颜色不能为空：颜色名（如 \"white\"、\"青色\"）或十六进制串（如 \"#ffffff\"）"
+        "都可以"),
+    "err.svg_unknown_color": (
+        "认不出这个颜色：{color} —— 请用颜色名（如 \"white\"、\"青色\"）"
+        "或十六进制串（如 \"#ffffff\"）"),
+    "err.svg_no_source": (
+        "svg_image() 需要 svg_file=（文件路径）或 svg_text=（源文本）二者之一"),
+    "err.svg_group_no_file": (
+        "import_svg_as_group() 需要第一个参数给出 SVG 文件路径，"
+        "例如 pen.import_svg_as_group(\"icon.svg\", x=10, y=10)"),
 
     # ---- 滤镜 ----
     "err.fx_unknown": (

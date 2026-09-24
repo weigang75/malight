@@ -24,7 +24,7 @@ ShapeMixin - basic shapes, named after their SVG elements (circle / ellipse / re
 | `rect(x, y, width, height, corner_radius=None, fill_color=Color.TRANS…, stroke_color=Color.BLACK, stroke_width=1, stroke_style=None, stroke_cap=None, stroke_join=None, fill_rule=None, dash_offset=None, blend_mode=None, filter=None, opacity=1.0, rotate=None, id_=None, **extra)` | Draw a rectangle. |
 | `square(x, y, side, **kw)` | Draw a square. |
 | `line(start, end, stroke_color=Color.BLACK, fill_color=Color.TRANS…, stroke_width=1, stroke_style=None, stroke_cap=None, stroke_join=None, dash_offset=None, blend_mode=None, filter=None, opacity=1.0, id_=None, **extra)` | Draw a line segment. |
-| `cross(x, y, width=5, height=5, color=Color.BLACK, stroke_width=1, id_=None)` | Draw a cross marker, often used to label key points. |
+| `cross(x, y, width=5, height=5, color=Color.BLACK, stroke_width=1, id_=None, **kw)` | Draw a cross marker, often used to label key points. |
 | `polyline(points, fill_color=Color.TRANS…, stroke_color=Color.BLACK, stroke_width=1, stroke_style=None, stroke_cap=None, stroke_join=None, dash_offset=None, blend_mode=None, filter=None, opacity=1.0, id_=None, **extra)` | Draw a polyline element. |
 | `polygon(points, fill_color=Color.TRANS…, stroke_color=Color.BLACK, stroke_width=1, stroke_style=None, stroke_cap=None, stroke_join=None, fill_rule=None, dash_offset=None, blend_mode=None, filter=None, opacity=1.0, id_=None, **extra)` | Draw a polygon. |
 | `regular_polygon(x, y, radius, n, stroke_color=Color.BLACK, fill_color=Color.TRANS…, stroke_width=1, opacity=1.0, id_=None, **extra)` | Draw a regular N-sided polygon. |

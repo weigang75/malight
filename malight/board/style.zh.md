@@ -20,7 +20,7 @@
 | 方法 | 说明 |
 |---|---|
 | `add_class(class_name, styles)` | 定义 CSS 类。 |
-| `add_font_face(font_file, family=None)` | 把字体文件内嵌为 @font-face，返回可直接用于 font-family 的族名。 |
+| `add_font_face(font_file, family=None)` | 登记字体文件并返回可直接用于 font-family 的族名。 |
 | `build_style_node()` | 生成 `<style>` 节点（finish 时调用，内部方法）。 |
 
 ---

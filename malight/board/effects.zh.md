@@ -19,10 +19,10 @@ ClipMaskMixin —— 裁剪与遮罩（SVG `<clipPath>` / `<mask>`）（方法�
 
 | 方法 | 说明 |
 |---|---|
-| `clipPath(clip_shape, targets=None, units=None, id_=None)` | 用任意形状裁剪目标元素（对应中文版 `裁剪`）。 |
-| `clip_circle(x, y, radius, targets=None, units=None, id_=None)` | 圆形裁剪（对应中文版 `圆形裁剪`）。 |
-| `clip_rect(x, y, width, height, targets=None, units=None, id_=None)` | 矩形裁剪（对应中文版 `矩形裁剪`）。 |
-| `mask(mask_shape, targets=None, units=None, content_units=None, id_=None)` | 遮罩（对应中文版 `遮罩`）：按遮罩亮度决定目标可见度。 |
+| `clipPath(clip_shape, targets=None, units=None, id_=None, **kw)` | 用任意形状裁剪目标元素（对应中文版 `裁剪`）。 |
+| `clip_circle(x, y, radius, targets=None, units=None, id_=None, **kw)` | 圆形裁剪（对应中文版 `圆形裁剪`）。 |
+| `clip_rect(x, y, width, height, targets=None, units=None, id_=None, **kw)` | 矩形裁剪（对应中文版 `矩形裁剪`）。 |
+| `mask(mask_shape, targets=None, units=None, content_units=None, id_=None, **kw)` | 遮罩（对应中文版 `遮罩`）：按遮罩亮度决定目标可见度。 |
 
 ---
 

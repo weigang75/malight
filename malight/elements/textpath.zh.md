@@ -15,6 +15,27 @@ TextPathElement 元素（每类一文件，含中文注释与示例）。
 
 路径文字元素（对应中文版 `路径文字元素`）：文字沿路径排列。
 
+| 方法 | 说明 |
+|---|---|
+| `get_text()` | 读取当前文字内容（存在内部 `<textPath>` 上）。 |
+| `get_start_offset()` | 读取 startOffset（默认 `"0%"`）。 |
+| `get_path()` | 读取引导路径的 `d` 字符串（引导路径藏在 defs 里，由 id 引用）。 |
+| `set_path(value)` | 设置 path（等价 `update(path=value)`）。 |
+| `set_text(value)` | 设置 text（等价 `update(text=value)`）。 |
+| `set_start_offset(value)` | 设置 start_offset（等价 `update(start_offset=value)`）。 |
+| `set_font(value)` | 设置 font（等价 `update(font=value)`）。 |
+| `get_font()` | 读取 font 的当前属性值。 |
+| `set_font_size(value)` | 设置 font_size（等价 `update(font_size=value)`）。 |
+| `get_font_size()` | 读取 font_size 的当前属性值。 |
+| `set_weight(value)` | 设置 weight（等价 `update(weight=value)`）。 |
+| `get_weight()` | 读取 weight 的当前属性值。 |
+| `set_decoration(value)` | 设置 decoration（等价 `update(decoration=value)`）。 |
+| `get_decoration()` | 读取 decoration 的当前属性值。 |
+| `set_letter_spacing(value)` | 设置 letter_spacing（等价 `update(letter_spacing=value)`）。 |
+| `get_letter_spacing()` | 读取 letter_spacing 的当前属性值。 |
+| `set_h_align(value)` | 设置 h_align（等价 `update(h_align=value)`）。 |
+| `get_h_align()` | 读取 h_align 的当前属性值。 |
+
 ---
 
 ## 完整示例
@@ -77,4 +98,4 @@ if __name__ == "__main__":
 
 ## 同级模块
 
-[base](base.zh.md) ｜ [circle](circle.zh.md) ｜ [clippath](clippath.zh.md) ｜ [ellipse](ellipse.zh.md) ｜ [group](group.zh.md) ｜ [image](image.zh.md) ｜ [line](line.zh.md) ｜ [link](link.zh.md) ｜ [marker](marker.zh.md) ｜ [mask](mask.zh.md) ｜ [path](path.zh.md) ｜ [pattern](pattern.zh.md) ｜ [polygon](polygon.zh.md) ｜ [polyline](polyline.zh.md) ｜ [rect](rect.zh.md) ｜ [svgimage](svgimage.zh.md) ｜ [symbol](symbol.zh.md) ｜ [text](text.zh.md) ｜ [use](use.zh.md)
+[base](base.zh.md) ｜ [circle](circle.zh.md) ｜ [clippath](clippath.zh.md) ｜ [ellipse](ellipse.zh.md) ｜ [group](group.zh.md) ｜ [image](image.zh.md) ｜ [line](line.zh.md) ｜ [link](link.zh.md) ｜ [marker](marker.zh.md) ｜ [mask](mask.zh.md) ｜ [path](path.zh.md) ｜ [pattern](pattern.zh.md) ｜ [polygon](polygon.zh.md) ｜ [polyline](polyline.zh.md) ｜ [rect](rect.zh.md) ｜ [svggroup](svggroup.zh.md) ｜ [svgimage](svgimage.zh.md) ｜ [symbol](symbol.zh.md) ｜ [text](text.zh.md) ｜ [use](use.zh.md)

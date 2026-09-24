@@ -18,6 +18,20 @@ MarkerElement 元素（每类一文件，含中文注释与示例）。
 | 方法 | 说明 |
 |---|---|
 | `add_element(el)` | 把图形加入 marker 内容。 |
+| `set_id_(value)` | 设置 id_（等价 `update(id_=value)`）。 |
+| `get_id_()` | 读取 id_ 的当前属性值。 |
+| `set_ref_x(value)` | 设置 ref_x（等价 `update(ref_x=value)`）。 |
+| `get_ref_x()` | 读取 ref_x 的当前属性值。 |
+| `set_ref_y(value)` | 设置 ref_y（等价 `update(ref_y=value)`）。 |
+| `get_ref_y()` | 读取 ref_y 的当前属性值。 |
+| `set_marker_width(value)` | 设置 marker_width（等价 `update(marker_width=value)`）。 |
+| `get_marker_width()` | 读取 marker_width 的当前属性值。 |
+| `set_marker_height(value)` | 设置 marker_height（等价 `update(marker_height=value)`）。 |
+| `get_marker_height()` | 读取 marker_height 的当前属性值。 |
+| `set_orient(value)` | 设置 orient（等价 `update(orient=value)`）。 |
+| `get_orient()` | 读取 orient 的当前属性值。 |
+| `set_marker_units(value)` | 设置 marker_units（等价 `update(marker_units=value)`）。 |
+| `get_marker_units()` | 读取 marker_units 的当前属性值。 |
 
 ---
 
@@ -89,4 +103,4 @@ if __name__ == "__main__":
 
 ## 同级模块
 
-[base](base.zh.md) ｜ [circle](circle.zh.md) ｜ [clippath](clippath.zh.md) ｜ [ellipse](ellipse.zh.md) ｜ [group](group.zh.md) ｜ [image](image.zh.md) ｜ [line](line.zh.md) ｜ [link](link.zh.md) ｜ [mask](mask.zh.md) ｜ [path](path.zh.md) ｜ [pattern](pattern.zh.md) ｜ [polygon](polygon.zh.md) ｜ [polyline](polyline.zh.md) ｜ [rect](rect.zh.md) ｜ [svgimage](svgimage.zh.md) ｜ [symbol](symbol.zh.md) ｜ [text](text.zh.md) ｜ [textpath](textpath.zh.md) ｜ [use](use.zh.md)
+[base](base.zh.md) ｜ [circle](circle.zh.md) ｜ [clippath](clippath.zh.md) ｜ [ellipse](ellipse.zh.md) ｜ [group](group.zh.md) ｜ [image](image.zh.md) ｜ [line](line.zh.md) ｜ [link](link.zh.md) ｜ [mask](mask.zh.md) ｜ [path](path.zh.md) ｜ [pattern](pattern.zh.md) ｜ [polygon](polygon.zh.md) ｜ [polyline](polyline.zh.md) ｜ [rect](rect.zh.md) ｜ [svggroup](svggroup.zh.md) ｜ [svgimage](svgimage.zh.md) ｜ [symbol](symbol.zh.md) ｜ [text](text.zh.md) ｜ [textpath](textpath.zh.md) ｜ [use](use.zh.md)

@@ -68,7 +68,8 @@ pen.export_png()      # 可选：导出 PNG（需 cairosvg；滤镜需浏览器�
 | `pen.text(x, y, s)` | `<text>` | 文字 |
 | `pen.textPath(pts, s)` | `<textPath>` | 沿路径文字 |
 | `pen.path(...)` | `<path>` | 路径（贝塞尔/圆弧/海龟绘图/布尔运算） |
-| `pen.image(file, x, y)` | `<image>` | 贴图（base64 内嵌） |
+| `pen.image(file, x, y)` | `<image>` | 位图贴图（base64 内嵌） |
+| `pen.svg_image(file, x, y)` | `<image>` | 贴 SVG（矢量、可改文本与颜色，见下） |
 | `pen.g()` | `<g>` | 组 |
 | `pen.symbol(id)` + `pen.use(id, x, y)` | `<symbol>` + `<use>` | 模板与复用 |
 | `pen.pattern(...)` | `<pattern>` | 图案填充 |
@@ -96,7 +97,8 @@ pen = Malight("demo")
 pen.text(50, 60, "枚举",    font=Font.SIMHEI)            # 枚举
 pen.text(50, 100, "字体名", font="KaiTi")                # 字体名（字符串，任意已安装字体）
 pen.text(50, 140, "粗体",   font=Font.MS_YAHEI, weight=FontWeight.BOLD)
-# 字体文件（.ttf/.otf/.ttc）：自动转 base64 内嵌 @font-face，换机器也不掉字
+# 字体文件（.ttf/.otf/.ttc）：默认只内嵌画面上实际用到的字（自动子集化），
+# 换机器不掉字、体积也小；想整份内嵌或只引用路径见下面「字体与图片」一节
 # pen.text(50, 180, "字体文件", font="C:/myfonts/MyFont.ttf")
 
 # 颜色：枚举（72 个常用色）+ 字符串 + RGB 都行
@@ -119,6 +121,95 @@ pen.finish()
 
 非枚举的通用取值也提供了小写常量：`YES` `NO` `ON` `OFF`。
 写错时 IDE 会直接补全，不用再背字符串。
+
+## 字体与图片：内嵌还是引用（`pen.set_embed`）
+
+本地字体文件与本地图片默认都会**装进 SVG**（换电脑、发给别人都不掉），
+但「装多少」可以选：
+
+| 资源 | 默认 | 可选 |
+|---|---|---|
+| 字体（`font=字体文件`） | `FontEmbed.SUBSET` —— 只内嵌画面上**实际用到的字** | `EMBED` 整份内嵌 / `LINK` 只写本地路径 |
+| 图片（`pen.image(...)`） | `ImageEmbed.EMBED` —— base64 内嵌 | `LINK` 只写相对路径 |
+
+```python
+from malight import Malight, FontEmbed, ImageEmbed, find_font_file
+
+pen = Malight("poster", fonts="link", images="link")   # 全用引用：文件最小
+pen.set_embed(fonts=FontEmbed.SUBSET)                  # 字体回到默认档
+
+# 字体不用把文字写两遍：finish() 时库自己扫描画面上用到的字再子集化
+pen.text(300, 100, "神笔码靓", font=find_font_file("小篆体"),
+         font_size=40, h_align="middle")
+pen.image("assets/bg.jpg", 0, 0, width=600, height=400)   # LINK 时写相对路径
+```
+
+实测（5.6 MB 的 `Android.ttf`，画面上只用到 12 个字）：
+
+| 模式 | 生成的 SVG |
+|---|---|
+| `SUBSET`（默认） | **4.5 KB** |
+| `EMBED` | 7.5 MB |
+| `LINK` | 0.7 KB |
+
+`LINK` 的代价：字体 / 图片文件必须留在原路径（同一台电脑、同一套目录结构），
+只把 SVG 单文件复制走就会掉字 / 缺图。想「拷到哪都不怕」就用默认档。
+图片 `LINK` 写的是**相对 SVG 所在目录**的路径，导出 PNG/PDF 时同样能读到。
+
+完整演示见 `examples/demo_embed.py`；自带字体见
+[assets/fonts/README.md](malight/assets/fonts/README.md)。
+
+## 同一个 SVG 文件换色（`pen.svg_image`）
+
+`pen.image()` 是把 SVG 当**位图**贴上去的，内容锁在 base64 里改不了；
+`pen.svg_image()` 把源文本读进元素，于是可以直接改它 —— 换颜色、换文字：
+
+```python
+icon = pen.svg_image("assets/icons/mark.svg", x=40, y=40, width=60)
+icon.svg_colors()                           # ['#ffffff', '#4dabf7']：文件里到底写的什么
+icon.replace_color("#ffffff", "#ff0000")    # 白底换红（#fff / white / 白色 都认）
+icon.replace_text("circle", "ellipse")      # 纯字符串替换
+
+# 同一个文件、三种配色，各改各的互不影响
+for i, color in enumerate(("#e63946", "#2a9d8f", "#1d3557")):
+    pen.svg_image("assets/icons/mark.svg", x=40 + i * 90, y=200,
+                  width=70).replace_color("white", color)
+```
+
+`replace_color` 按**颜色**换而不是按字符串换：`#ffffff` / `#FFF` /
+`rgb(255,255,255)` / `white` / `白色` 算同一种颜色，一次全命中；`id="orange"`
+这类同名标识不动。文件里没有那种颜色时会给出提示并列出实际用到的颜色，
+而不是静默地「改了个寂寞」。
+
+### 想拆开二次编辑（`import_svg_as_group` / `import_svg_as_symbol`）
+
+换色只属于上面那个「自带一份文本」的 SVG 图元素。想把 SVG **拆开二次编辑**
+（改属性、加动画、套滤镜）就用这两个入口，拿到的是**节点**：
+
+```python
+g = pen.import_svg_as_group("assets/icons/mark.svg", x=40, y=40, scale=0.5)
+g.bbox()                              # 组该有的能力照常
+g.translate(10, 0)
+for node in g.walk():                 # 遍历所有节点，想改哪个属性改哪个
+    print(node.tag, node.attribs.get("fill"))
+```
+
+它们**不带换色方法**——颜色是图形自己的属性，不是「组」这个容器的性质；要换色
+就用工具函数就地改节点，连 `<style>` 块里 class 写的颜色也一起换：
+
+```python
+from malight.tools import replace_svg_node_color, svg_node_colors
+
+svg_node_colors(g.node)               # ['#ffffff', '#4dabf7']
+replace_svg_node_color(g.node, "white", "#ff0000")
+
+tpl = pen.import_svg_as_symbol("assets/icons/mark.svg", id_="mark")
+replace_svg_node_color(tpl.node, "white", "#ff0000")   # 改模板一处，<use> 实例全变
+pen.use("mark", x=200, y=40, width=80, height=60)
+```
+
+想让每份副本各是一种配色，仍用 `pen.svg_image()` 逐个换 —— 模板的语义就是
+「一处改、处处变」。
 
 ## 运行时可切中英文（默认英文）
 
@@ -225,6 +316,7 @@ python tools/gen_docs.py path       # 只刷新名字匹配的模块
 | [polygon](malight/elements/polygon.zh.md) | PolygonElement 元素（每类一文件，含中文注释与示例）。 |
 | [polyline](malight/elements/polyline.zh.md) | PolylineElement 元素（每类一文件，含中文注释与示例）。 |
 | [rect](malight/elements/rect.zh.md) | RectElement 元素（每类一文件，含中文注释与示例）。 |
+| [svggroup](malight/elements/svggroup.zh.md) | SvgGroupElement 元素（每类一文件，含中文注释与示例）。 |
 | [svgimage](malight/elements/svgimage.zh.md) | SVGImageElement 元素（每类一文件，含中文注释与示例）。 |
 | [symbol](malight/elements/symbol.zh.md) | TemplateElement 元素（每类一文件，含中文注释与示例）。 |
 | [text](malight/elements/text.zh.md) | TextElement 元素（每类一文件，含中文注释与示例）。 |

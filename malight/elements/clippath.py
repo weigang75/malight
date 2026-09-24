@@ -16,10 +16,10 @@ if __name__ == "__main__" and not __package__:
         _os.path.abspath(__file__)))))
     __package__ = "malight.elements"
 
-from .base import Element, _paint, _fmt_points, _fmt_transform, _Self
+from .base import Element, _paint, _fmt_points, _fmt_transform
 
 
-class ClipPathElement(Element):
+class ClipPathElement(Element["ClipPathElement"]):
     """
     裁剪元素（<clipPath>，对应中文版 `裁剪元素`）。 / Clip-path element.
 
@@ -28,14 +28,17 @@ class ClipPathElement(Element):
         pen.clip_circle(200, 150, 120, target=photo)   # 圆形裁剪照片
     """
 
-    def __init__(self, board, clip_shape=None, targets=None, units=None, id_=None):
+    def __init__(self, board, clip_shape=None, targets=None, units=None, id_=None,
+                 **kw):
         super().__init__(board, board.defs_node, tag="clipPath")
-        self._update_attrs(clip_shape=clip_shape, units=units, id_=id_)
+        self._update_attrs(clip_shape=clip_shape, units=units, id_=id_, **kw)
         self.apply_to(targets)
 
-    def _update_attrs(self, clip_shape=None, units=None, id_=None):
+    def _update_attrs(self, clip_shape=None, units=None, id_=None, **kw):
         """写入 clipPath 属性并挂载裁剪形状（内部方法）。"""
         self._apply_common({"id_": id_ or Element._next_id("clip")})
+        self._apply_common(kw)      # 公共样式照常落地（英文版修正：以前直接 TypeError）
+        self._apply_paint(kw)       # 填充/描边会被裁剪形状继承
         self.node.set("clipPathUnits", units or "userSpaceOnUse")
         if clip_shape is not None:
             if hasattr(clip_shape, "remove"):
@@ -47,7 +50,7 @@ class ClipPathElement(Element):
             else:
                 self.node.add(clip_shape)
 
-    def apply_to(self, targets) -> _Self:
+    def apply_to(self, targets) -> "ClipPathElement":
         """
         把裁剪应用到目标元素（可为单个或列表）。 / Apply the clip to one target element or a list of them.
 
@@ -61,6 +64,38 @@ class ClipPathElement(Element):
         for t in targets:
             t.node.set("clip-path", f"url(#{self.node.attribs['id']})")
         return self
+
+    # ------------------------------------------------------------------
+    # 参数访问器（显式方法，与动态合成的 set_/get_ 等价）。 / Parameter accessors, written out explicitly; identical to the
+    # 展开成真实方法是为了让 IDE 能补全、拼错能报错。 / dynamically synthesized set_/get_. Real methods so the IDE completes them and flags typos.
+    # 本区块由 tools/gen_attr_accessors.py 依 _update_attrs 生成。 / Generated from the _update_attrs signature by tools/gen_attr_accessors.py.
+    # 手改会被 `python tools/gen_attr_accessors.py --check` 判为不同步。 / Hand edits make that check report it as out of sync.
+    # ------------------------------------------------------------------
+    # >>> gen_attr_accessors: begin (generated, do not edit by hand)
+    def set_clip_shape(self, value) -> "ClipPathElement":
+        """设置 clip_shape（等价 ``update(clip_shape=value)``）。 / Set clip_shape; the same as ``update(clip_shape=value)``."""
+        return self.update(clip_shape=value)
+
+    def get_clip_shape(self) -> object:
+        """读取 clip_shape 的当前属性值。 / Read the current raw clip_shape attribute."""
+        return self._get_attr_value("clip_shape")
+
+    def set_units(self, value) -> "ClipPathElement":
+        """设置 units（等价 ``update(units=value)``）。 / Set units; the same as ``update(units=value)``."""
+        return self.update(units=value)
+
+    def get_units(self) -> object:
+        """读取 units 的当前属性值。 / Read the current raw units attribute."""
+        return self._get_attr_value("units")
+
+    def set_id_(self, value) -> "ClipPathElement":
+        """设置 id_（等价 ``update(id_=value)``）。 / Set id_; the same as ``update(id_=value)``."""
+        return self.update(id_=value)
+
+    def get_id_(self) -> object:
+        """读取 id_ 的当前属性值。 / Read the current raw id_ attribute."""
+        return self._get_attr_value("id_")
+    # <<< gen_attr_accessors: end
 
 # ===========================================================================
 # 使用示例

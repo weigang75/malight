@@ -5,11 +5,17 @@
 本文件只包含 ContainerMixin 一个类（Mixin），由 board/__init__.py 组合进 MagicPen。
 """
 
+from typing import TypeVar
+
 from ..elements import (Element, CircleElement, EllipseElement, RectElement,
     LineElement, PolylineElement, PolygonElement, TextElement, TextPathElement,
     ImageElement, SVGImageElement, GroupElement, TemplateElement, UseElement,
     MarkerElement, ClipPathElement, MaskElement, LinkElement, PatternElement,
     _paint, _fmt_points)
+
+# copy() / _new() 这类「进什么类型出什么类型」的方法用它撑住类型推导：
+# 泛型实参由传入的元素决定，链式补全才不会退化成裸 Element。
+_El = TypeVar("_El", bound="Element")
 
 
 class ContainerMixin:
@@ -33,16 +39,19 @@ class ContainerMixin:
                          opacity=opacity, blend_mode=blend_mode, filter=filter,
                          **kw)
 
-    def symbol(self, id_=None, view_box=None) -> TemplateElement:
+    def symbol(self, id_=None, view_box=None, **kw) -> TemplateElement:
         """
         创建模板（<symbol>，对应中文版 `创建模板`）。 / Create a symbol (reusable template).
+
+        :param view_box: 视口，如 ``"0 0 40 40"``
+        :param kw: 公共样式参数（opacity / class_name / style_str 等），会继承给模板内容
 
         示例::
             t = pen.symbol(id="icon_star", view_box="0 0 40 40")
             t.add_element(pen.polygon([(20, 2), (38, 36), (2, 36)], fill_color="gold"))
             pen.template("icon_star", x=60, y=60, width=40, height=40)
         """
-        return self._new(TemplateElement, view_box=view_box, id_=id_)
+        return self._new(TemplateElement, view_box=view_box, id_=id_, **kw)
 
     def use(self, template_id, x=None, y=None, width=None, height=None, **kw) -> UseElement:
         """
@@ -66,9 +75,13 @@ class ContainerMixin:
         return self._new(PatternElement, x=x, y=y, width=width, height=height,
                          id_=id_, **kw)
 
-    def copy(self, el, x=None, y=None, opacity=1.0, id_=None) -> "Element":
+    def copy(self, el: _El, x=None, y=None, opacity=1.0, id_=None) -> _El:
         """
         复制元素（对应中文版 `复制元素`），可指定偏移。 / Duplicate an element, optionally with an offset.
+
+        :param el: 要复制的元素
+        :param x, y: 新位置（默认按包围盒左上角对齐）
+        :return: 与原元素同类型的新元素
 
         示例::
             twin = pen.copy(shape, x=120, y=0)
@@ -97,7 +110,7 @@ class ContainerMixin:
         return link
 
     def marker(self, id_=None, ref_x=0, ref_y=0, width=10, height=10,
-               orient="auto", marker_units=None) -> MarkerElement:
+               orient="auto", marker_units=None, **kw) -> MarkerElement:
         """
         创建线端标记（<marker>，对应中文版 `创建标记`）。 / Create a line-end marker such as an arrowhead.
 
@@ -107,6 +120,7 @@ class ContainerMixin:
                        ``"auto-start-reverse"`` 起点自动反向；也可写角度 ``"45"``
         :param marker_units: ``"strokeWidth"``（默认，随线宽缩放）或
                              ``"userSpaceOnUse"``（固定像素，线宽变化时不缩放）
+        :param kw: 公共样式与填充/描边参数（opacity / fill_color / stroke_width 等）
 
         示例::
             m = pen.marker(id_="arrow", ref_x=9, ref_y=3, width=10, height=6)
@@ -115,7 +129,7 @@ class ContainerMixin:
         """
         return self._new(MarkerElement, id_=id_, ref_x=ref_x, ref_y=ref_y,
                          marker_width=width, marker_height=height,
-                         orient=orient, marker_units=marker_units)
+                         orient=orient, marker_units=marker_units, **kw)
 
     # ------------------------------------------------------------------
     # 图像

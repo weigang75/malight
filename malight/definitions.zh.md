@@ -41,7 +41,7 @@ pen.text(100, 100, "标题", font=Font.SIMHEI, weight=FontWeight.BOLD)
 pen.polygon(pts, fill_color=ColorName.TEAL, fill_rule=FillRule.EVENODD)
 pen.line((0, 0), (100, 0), stroke_style=DashStyle.DASHED)
 
-print(Color.RED)                 # "red"（完整 140 色常量）
+print(Color.RED)                 # "#ff0000"（138 种具名颜色 + 2 个无色常量）
 print(ColorName.RED)             # "red"（常用色枚举）
 print(Color.RGB(30, 144, 255))   # "#1e90ff"
 print(Color.darken("#D75D72"))   # 颜色加深
@@ -186,6 +186,14 @@ PDF 导出方式（对应中文版 `PDF生成方式`）。
 ### `PNGMode`
 
 PNG 导出方式（对应中文版 `PNG生成方式`）。
+
+### `FontEmbed`
+
+字体嵌入方式（英文版新增，对应 `pen.set_embed(fonts=...)`）。
+
+### `ImageEmbed`
+
+图片嵌入方式（英文版新增，对应 `pen.set_embed(images=...)`）。
 
 ### `DOCXMode`
 

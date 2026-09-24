@@ -154,14 +154,16 @@ class ShapeMixin:
                          blend_mode=blend_mode, filter=filter, dash_offset=dash_offset)
 
     def cross(self, x, y, width=5, height=5, color=Color.BLACK,
-                   stroke_width=1, id_=None) -> GroupElement:
+                   stroke_width=1, id_=None, **kw) -> GroupElement:
         """
         画十字标记（对应中文版 `十字`），常用于标注关键点。 / Draw a cross marker, often used to label key points.
+
+        :param kw: 组的公共样式参数（opacity / blend_mode / filter 等）
 
         示例::
             pen.draw_cross(200, 150, width=8, color=Color.RED)
         """
-        g = self.g(id_=id_)
+        g = self.g(id_=id_, **kw)
         self.line((x - width, y), (x + width, y),
                        stroke_color=color, stroke_width=stroke_width).change_group(g)
         self.line((x, y - height), (x, y + height),

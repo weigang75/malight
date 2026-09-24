@@ -20,7 +20,7 @@ Style helper (pen.style) managing CSS classes, the global stylesheet and font-fi
 | Method | Description |
 |---|---|
 | `add_class(class_name, styles)` | Define a CSS class. |
-| `add_font_face(font_file, family=None)` | Embed a font file as @font-face and return a family name usable for font-family. |
+| `add_font_face(font_file, family=None)` | Register a font file and return a family name usable for font-family. |
 | `build_style_node()` | Build the `<style>` node; called by finish() and considered internal. |
 
 ---

@@ -19,10 +19,10 @@ if __name__ == "__main__" and not __package__:
 from ..svg_backend import SvgNode, fmt_num
 from ..definitions import (Color, StrokeCap, StrokeJoin, TextHAlign, TextVAlign,
                            value_of)
-from .base import Element, _paint, _fmt_points, _fmt_transform, _Self
+from .base import Element, _paint, _fmt_points, _fmt_transform
 
 
-class TextElement(Element):
+class TextElement(Element["TextElement"]):
     """
     文字元素（对应中文版 `文字元素`）。 / Text element.
 
@@ -109,7 +109,7 @@ class TextElement(Element):
     # Explicit accessors for the text parameters; they behave exactly like
     # the dynamic ones and exist so IDEs can autocomplete them.
 
-    def set_text(self, value) -> _Self:
+    def set_text(self, value) -> "TextElement":
         """改文字内容。 / Change the text content.
 
         示例 / Example::
@@ -121,7 +121,7 @@ class TextElement(Element):
         """读取当前文字内容。 / Read the current text content."""
         return self._get_attr_value("text")
 
-    def set_font(self, font) -> _Self:
+    def set_font(self, font) -> "TextElement":
         """改字体（枚举 / 字体名 / 字体文件都行）。 / Change the font (enum, family name or font file).
 
         示例 / Example::
@@ -133,7 +133,7 @@ class TextElement(Element):
         """读取字体族的当前属性值。 / Read the current raw font-family attribute."""
         return self._get_attr_value("font")
 
-    def set_font_size(self, size) -> _Self:
+    def set_font_size(self, size) -> "TextElement":
         """改字号。 / Change the font size.
 
         示例 / Example::
@@ -145,7 +145,7 @@ class TextElement(Element):
         """读取字号的当前属性值。 / Read the current raw font-size attribute."""
         return self._get_attr_value("font_size")
 
-    def set_bold(self, flag=True) -> _Self:
+    def set_bold(self, flag=True) -> "TextElement":
         """加粗开关。 / Turn bold on or off.
 
         示例 / Example::
@@ -157,7 +157,7 @@ class TextElement(Element):
         """读取字重的当前属性值（如 "bold" / "700"）。 / Read the current raw font-weight attribute."""
         return self._get_attr_value("bold")
 
-    def set_italic(self, flag=True) -> _Self:
+    def set_italic(self, flag=True) -> "TextElement":
         """斜体开关。 / Turn italic on or off.
 
         示例 / Example::
@@ -169,7 +169,7 @@ class TextElement(Element):
         """读取字体样式的当前属性值。 / Read the current raw font-style attribute."""
         return self._get_attr_value("italic")
 
-    def set_underline(self, flag=True) -> _Self:
+    def set_underline(self, flag=True) -> "TextElement":
         """下划线开关。 / Turn underline on or off.
 
         示例 / Example::
@@ -181,7 +181,7 @@ class TextElement(Element):
         """读取文字修饰线的当前属性值。 / Read the current raw text-decoration attribute."""
         return self._get_attr_value("underline")
 
-    def set_weight(self, weight) -> _Self:
+    def set_weight(self, weight) -> "TextElement":
         """改字重（FontWeight 枚举或 "700"）。 / Set the font weight (FontWeight enum or "700").
 
         示例 / Example::
@@ -193,7 +193,7 @@ class TextElement(Element):
         """读取字重的当前属性值。 / Read the current raw font-weight attribute."""
         return self._get_attr_value("weight")
 
-    def set_decoration(self, decoration) -> _Self:
+    def set_decoration(self, decoration) -> "TextElement":
         """改文字修饰线（下划线/删除线）。 / Set the text decoration (underline / line-through).
 
         示例 / Example::
@@ -205,7 +205,7 @@ class TextElement(Element):
         """读取文字修饰线的当前属性值。 / Read the current raw text-decoration attribute."""
         return self._get_attr_value("decoration")
 
-    def set_letter_spacing(self, spacing) -> _Self:
+    def set_letter_spacing(self, spacing) -> "TextElement":
         """改字间距。 / Set the letter spacing.
 
         示例 / Example::
@@ -217,7 +217,7 @@ class TextElement(Element):
         """读取字间距的当前属性值。 / Read the current raw letter-spacing attribute."""
         return self._get_attr_value("letter_spacing")
 
-    def set_word_spacing(self, spacing) -> _Self:
+    def set_word_spacing(self, spacing) -> "TextElement":
         """改词间距（西文排版用）。 / Set the word spacing (mostly for Latin text).
 
         示例 / Example::
@@ -229,7 +229,7 @@ class TextElement(Element):
         """读取词间距的当前属性值。 / Read the current raw word-spacing attribute."""
         return self._get_attr_value("word_spacing")
 
-    def set_h_align(self, align) -> _Self:
+    def set_h_align(self, align) -> "TextElement":
         """改水平对齐（TextHAlign 或 "middle"）。 / Set the horizontal alignment (TextHAlign or a string).
 
         示例 / Example::
@@ -241,7 +241,7 @@ class TextElement(Element):
         """读取水平对齐的当前属性值（text-anchor）。 / Read the current raw text-anchor attribute."""
         return self._get_attr_value("h_align")
 
-    def set_v_align(self, align) -> _Self:
+    def set_v_align(self, align) -> "TextElement":
         """改垂直对齐（TextVAlign 或 "middle"）。 / Set the vertical alignment (TextVAlign or a string).
 
         示例 / Example::
@@ -253,7 +253,7 @@ class TextElement(Element):
         """读取垂直对齐的当前属性值。 / Read the current raw alignment-baseline attribute."""
         return self._get_attr_value("v_align")
 
-    def set_char_rotate(self, angles) -> _Self:
+    def set_char_rotate(self, angles) -> "TextElement":
         """改逐字旋转角度（角度列表）。 / Set the per-character rotation angles (a list).
 
         示例 / Example::
@@ -265,7 +265,7 @@ class TextElement(Element):
         """读取逐字旋转的当前属性值。 / Read the current raw rotate attribute."""
         return self._get_attr_value("char_rotate")
 
-    def set_text_length(self, length, adjust=None) -> _Self:
+    def set_text_length(self, length, adjust=None) -> "TextElement":
         """改文字总宽压缩；给了 adjust 就一并设置调整方式。 / Set the text length; pass adjust to set lengthAdjust at the same time.
 
         示例 / Example::
@@ -279,7 +279,7 @@ class TextElement(Element):
         """读取文字总宽的当前属性值（textLength）。 / Read the current raw textLength attribute."""
         return self._get_attr_value("text_length")
 
-    def set_length_adjust(self, adjust) -> _Self:
+    def set_length_adjust(self, adjust) -> "TextElement":
         """改宽度调整方式（配合 text_length）。 / Set lengthAdjust (pairs with text_length).
 
         示例 / Example::
@@ -298,6 +298,30 @@ class TextElement(Element):
         size = float(self.node.attribs.get("font-size", 16))
         n = len(self.node.text or "")
         return (x, y - size, x + size * n, y + size * 0.3)
+
+    # ------------------------------------------------------------------
+    # 参数访问器（显式方法，与动态合成的 set_/get_ 等价）。 / Parameter accessors, written out explicitly; identical to the
+    # 展开成真实方法是为了让 IDE 能补全、拼错能报错。 / dynamically synthesized set_/get_. Real methods so the IDE completes them and flags typos.
+    # 本区块由 tools/gen_attr_accessors.py 依 _update_attrs 生成。 / Generated from the _update_attrs signature by tools/gen_attr_accessors.py.
+    # 手改会被 `python tools/gen_attr_accessors.py --check` 判为不同步。 / Hand edits make that check report it as out of sync.
+    # ------------------------------------------------------------------
+    # >>> gen_attr_accessors: begin (generated, do not edit by hand)
+    def set_x(self, value) -> "TextElement":
+        """设置 x（等价 ``update(x=value)``）。 / Set x; the same as ``update(x=value)``."""
+        return self.update(x=value)
+
+    def get_x(self) -> object:
+        """读取 x 的当前属性值。 / Read the current raw x attribute."""
+        return self._get_attr_value("x")
+
+    def set_y(self, value) -> "TextElement":
+        """设置 y（等价 ``update(y=value)``）。 / Set y; the same as ``update(y=value)``."""
+        return self.update(y=value)
+
+    def get_y(self) -> object:
+        """读取 y 的当前属性值。 / Read the current raw y attribute."""
+        return self._get_attr_value("y")
+    # <<< gen_attr_accessors: end
 
 # ===========================================================================
 # 使用示例

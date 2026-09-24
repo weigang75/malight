@@ -218,6 +218,15 @@ if __name__ == "__main__":
     ed.show(labels=True)
 
     pen.finish()
+
+# ---------------------------------------------------------------------------
+# Bottom import: show()'s return annotation names GroupElement.
+# A top-level import would pull in the elements package while elements.path imports this module back, forming a cycle.
+# Moving it to the bottom of the file, after PathEditor is fully defined, solves both.
+# The annotation must be resolvable at runtime, since examples/test_types.py checks every one of them with get_type_hints.
+# So no TYPE_CHECKING guard here - same pattern as the bottom imports in elements/base.py.
+# ---------------------------------------------------------------------------
+from ..elements.group import GroupElement  # noqa: E402
 ```
 
 ---

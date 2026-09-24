@@ -722,7 +722,17 @@ STRING_EN = {
     # ------------------------------------------------------------------
     "SVG 图元素 bbox:": "SVG image bbox:",
     "更新后 bbox:": "bbox after update:",
-    "导入为组后的子节点数:": "children after importing as a group:",
+    "导入为组后的节点数:": "nodes after importing as a group:",
+    "导入为组后 bbox:": "bbox after importing as a group:",
+
+    # ------------------------------------------------------------------
+    # elements/svggroup.py
+    # ------------------------------------------------------------------
+    "用到的颜色:": "colours used:",
+    "换色后:": "after recolouring:",
+    "组内容的包围盒:": "bounding box:",
+    "内容节点:": "content nodes:",
+    "移动后包围盒:": "bbox after moving:",
 
     # ------------------------------------------------------------------
     # elements/symbol.py

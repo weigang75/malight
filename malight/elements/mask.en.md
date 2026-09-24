@@ -18,6 +18,14 @@ Mask element controlling visibility by luminance.
 | Method | Description |
 |---|---|
 | `apply_to(targets)` | Apply the mask to a target element. |
+| `set_mask_shape(value)` | Set mask_shape; the same as `update(mask_shape=value)`. |
+| `get_mask_shape()` | Read the current raw mask_shape attribute. |
+| `set_units(value)` | Set units; the same as `update(units=value)`. |
+| `get_units()` | Read the current raw units attribute. |
+| `set_content_units(value)` | Set content_units; the same as `update(content_units=value)`. |
+| `get_content_units()` | Read the current raw content_units attribute. |
+| `set_id_(value)` | Set id_; the same as `update(id_=value)`. |
+| `get_id_()` | Read the current raw id_ attribute. |
 
 ---
 
@@ -89,4 +97,4 @@ if __name__ == "__main__":
 
 ## Sibling modules
 
-[base](base.en.md) ｜ [circle](circle.en.md) ｜ [clippath](clippath.en.md) ｜ [ellipse](ellipse.en.md) ｜ [group](group.en.md) ｜ [image](image.en.md) ｜ [line](line.en.md) ｜ [link](link.en.md) ｜ [marker](marker.en.md) ｜ [path](path.en.md) ｜ [pattern](pattern.en.md) ｜ [polygon](polygon.en.md) ｜ [polyline](polyline.en.md) ｜ [rect](rect.en.md) ｜ [svgimage](svgimage.en.md) ｜ [symbol](symbol.en.md) ｜ [text](text.en.md) ｜ [textpath](textpath.en.md) ｜ [use](use.en.md)
+[base](base.en.md) ｜ [circle](circle.en.md) ｜ [clippath](clippath.en.md) ｜ [ellipse](ellipse.en.md) ｜ [group](group.en.md) ｜ [image](image.en.md) ｜ [line](line.en.md) ｜ [link](link.en.md) ｜ [marker](marker.en.md) ｜ [path](path.en.md) ｜ [pattern](pattern.en.md) ｜ [polygon](polygon.en.md) ｜ [polyline](polyline.en.md) ｜ [rect](rect.en.md) ｜ [svggroup](svggroup.en.md) ｜ [svgimage](svgimage.en.md) ｜ [symbol](symbol.en.md) ｜ [text](text.en.md) ｜ [textpath](textpath.en.md) ｜ [use](use.en.md)

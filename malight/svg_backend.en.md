@@ -42,6 +42,7 @@ An SVG node: tag, attribute dict and child list.
 | `set(key, value)` | Set an attribute; passing None removes it, which makes conditional attributes easy. |
 | `find(node_id)` | Find a descendant by id recursively; returns None when absent. |
 | `remove_child(child)` | Remove a child node, silently ignoring a missing one. |
+| `walk()` | Walk this node and every descendant, depth first. |
 | `to_xml(indent=0, pretty=True)` | Serialise the node to an XML string. |
 
 ---

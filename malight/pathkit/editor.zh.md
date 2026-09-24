@@ -213,6 +213,15 @@ if __name__ == "__main__":
     ed.show(labels=True)
 
     pen.finish()
+
+# ---------------------------------------------------------------------------
+# 底部导入：show() 的返回注解引用 GroupElement。
+# 顶部导入会把 elements 包拉起来，而 elements.path 又 import 本模块，形成循环。
+# 放到文件末尾（PathEditor 已定义完毕）两个问题都解决。
+# 注解必须能在运行时求值（examples/test_types.py 用 get_type_hints 逐个校验）。
+# 所以不能用 TYPE_CHECKING 守卫，与 elements/base.py 的底部导入同一范式。
+# ---------------------------------------------------------------------------
+from ..elements.group import GroupElement  # noqa: E402
 ```
 
 ---

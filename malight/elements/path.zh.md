@@ -67,7 +67,6 @@ PathElement 路径元素（对应中文版 路径元素）。
 | `print_points()` | 打印路径结构说明（看曲线有几个点、点在哪）。 |
 | `show_points(board=None, **kw)` | 在画布上画出锚点（方块）与调整杆（线 + 圆点），像钢笔工具一样。 |
 | `smooth(tightness=1.0)` | 把路径中的折线顶点平滑为贝塞尔曲线（Catmull-Rom 转样条， 对应中文版 `平滑路径`）。 |
-| `update(**kw)` | 更新路径样式属性。 |
 
 ---
 
@@ -175,10 +174,16 @@ if __name__ == "__main__":
         print("布尔运算需要可选依赖，跳过:", type(exc).__name__)
 
     pen.finish()
+
+# ---------------------------------------------------------------------------
+# 底部导入：show_points() 的返回注解引用 GroupElement，而 group.py 又继承本模块
+# 的 Element —— 顶部互相导入会循环；放到文件末尾两个问题都解决。
+# ---------------------------------------------------------------------------
+from .group import GroupElement  # noqa: E402
 ```
 
 ---
 
 ## 同级模块
 
-[base](base.zh.md) ｜ [circle](circle.zh.md) ｜ [clippath](clippath.zh.md) ｜ [ellipse](ellipse.zh.md) ｜ [group](group.zh.md) ｜ [image](image.zh.md) ｜ [line](line.zh.md) ｜ [link](link.zh.md) ｜ [marker](marker.zh.md) ｜ [mask](mask.zh.md) ｜ [pattern](pattern.zh.md) ｜ [polygon](polygon.zh.md) ｜ [polyline](polyline.zh.md) ｜ [rect](rect.zh.md) ｜ [svgimage](svgimage.zh.md) ｜ [symbol](symbol.zh.md) ｜ [text](text.zh.md) ｜ [textpath](textpath.zh.md) ｜ [use](use.zh.md)
+[base](base.zh.md) ｜ [circle](circle.zh.md) ｜ [clippath](clippath.zh.md) ｜ [ellipse](ellipse.zh.md) ｜ [group](group.zh.md) ｜ [image](image.zh.md) ｜ [line](line.zh.md) ｜ [link](link.zh.md) ｜ [marker](marker.zh.md) ｜ [mask](mask.zh.md) ｜ [pattern](pattern.zh.md) ｜ [polygon](polygon.zh.md) ｜ [polyline](polyline.zh.md) ｜ [rect](rect.zh.md) ｜ [svggroup](svggroup.zh.md) ｜ [svgimage](svgimage.zh.md) ｜ [symbol](symbol.zh.md) ｜ [text](text.zh.md) ｜ [textpath](textpath.zh.md) ｜ [use](use.zh.md)

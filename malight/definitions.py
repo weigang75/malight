@@ -39,7 +39,7 @@ Colors, fonts, paper sizes and every option enum.
     pen.polygon(pts, fill_color=ColorName.TEAL, fill_rule=FillRule.EVENODD)
     pen.line((0, 0), (100, 0), stroke_style=DashStyle.DASHED)
 
-    print(Color.RED)                 # "red"（完整 140 色常量）
+    print(Color.RED)                 # "#ff0000"（138 种具名颜色 + 2 个无色常量）
     print(ColorName.RED)             # "red"（常用色枚举）
     print(Color.RGB(30, 144, 255))   # "#1e90ff"
     print(Color.darken("#D75D72"))   # 颜色加深
@@ -159,11 +159,11 @@ class Color:
     """
     颜色常量与颜色运算工具（对应中文版 `颜色` 类）。 / Color constants and color-arithmetic helpers.
 
-    属性为 140 种 SVG 具名颜色的英文名常量（值即 SVG 认可的颜色串），
+    属性为 138 种具名颜色的英文大写常量，值是颜色串（如 `Color.RED` 即 `"#ff0000"`），
     另有 NONE（空串）与 TRANSPARENT（"none"，不填充/不描边）。
 
     示例::
-        Color.RED                     # "red"
+        Color.RED                     # "#ff0000"
         Color.RGB(255, 0, 0)          # "#ff0000"
         Color.hex_of("black")         # "#000000"
         Color.random()                # 随机颜色 "#3af192"
@@ -173,11 +173,153 @@ class Color:
     NONE = ""            # 空（不设置）
     TRANSPARENT = "none"  # 透明（SVG fill/stroke 的 none）
 
-    # 由颜色表自动生成的英文常量：Color.BLACK = "black" ...
-    locals().update({en.upper(): v for en, v in _ENGLISH_NAMES.items()})
-
-    # 兼容别名（与中文版习惯一致）: AQUA/CYAN 同色
-    AQUA = "#00ffff"
+    # ------------------------------------------------------------------
+    # 138 种具名颜色的英文常量，值是颜色串（Color.RED == "#ff0000"）。 / Constants for the 138 named colours; each value is the colour string, so Color.RED == "#ff0000".
+    # 逐个显式赋值、不动态生成，PyCharm 才能补全和检查这些名字。 / One explicit assignment per line instead of a dynamic write, so PyCharm can complete and check the names.
+    # 颜色数据只在 _COLOR_TABLE 里写一遍，本区块由工具展开。 / The data lives only in _COLOR_TABLE above; this block is expanded from it by a tool.
+    # 手改会被 `python tools/gen_color_constants.py --check` 判为不同步。 / Hand edits make that check report the block as out of sync.
+    # AQUA 与 CYAN 同色（都是 "#00ffff"），两个名字都能用。 / AQUA and CYAN are the same colour ("#00ffff"); both names work.
+    # ------------------------------------------------------------------
+    # >>> gen_color_constants: begin (generated, do not edit by hand)
+    BLACK                = "#000000"
+    NAVY                 = "#000080"
+    DARKBLUE             = "#00008b"
+    MEDIUMBLUE           = "#0000cd"
+    BLUE                 = "#0000ff"
+    DARKGREEN            = "#006400"
+    GREEN                = "#008000"
+    TEAL                 = "#008080"
+    DARKCYAN             = "#008b8b"
+    DEEPSKYBLUE          = "#00bfff"
+    DARKTURQUOISE        = "#00ced1"
+    MEDIUMSPRINGGREEN    = "#00fa9a"
+    LIME                 = "#00ff00"
+    SPRINGGREEN          = "#00ff7f"
+    AQUA                 = "#00ffff"
+    MIDNIGHTBLUE         = "#191970"
+    DODGERBLUE           = "#1e90ff"
+    LIGHTSEAGREEN        = "#20b2aa"
+    FORESTGREEN          = "#228b22"
+    SEAGREEN             = "#2e8b57"
+    DARKSLATEGRAY        = "#2f4f4f"
+    LIMEGREEN            = "#32cd32"
+    MEDIUMSEAGREEN       = "#3cb371"
+    TURQUOISE            = "#40e0d0"
+    ROYALBLUE            = "#4169e1"
+    STEELBLUE            = "#4682b4"
+    DARKSLATEBLUE        = "#483d8b"
+    MEDIUMTURQUOISE      = "#48d1cc"
+    INDIGO               = "#4b0082"
+    CYAN                 = "#00ffff"
+    DARKOLIVEGREEN       = "#556b2f"
+    CADETBLUE            = "#5f9ea0"
+    CORNFLOWERBLUE       = "#6495ed"
+    MEDIUMAQUAMARINE     = "#66cdaa"
+    DIMGRAY              = "#696969"
+    SLATEBLUE            = "#6a5acd"
+    OLIVEDRAB            = "#6b8e23"
+    SLATEGRAY            = "#708090"
+    LIGHTSLATEGRAY       = "#778899"
+    MEDIUMSLATEBLUE      = "#7b68ee"
+    LAWNGREEN            = "#7cfc00"
+    CHARTREUSE           = "#7fff00"
+    AQUAMARINE           = "#7fffd4"
+    MAROON               = "#800000"
+    PURPLE               = "#800080"
+    OLIVE                = "#808000"
+    GRAY                 = "#808080"
+    SKYBLUE              = "#87ceeb"
+    LIGHTSKYBLUE         = "#87cefa"
+    BLUEVIOLET           = "#8a2be2"
+    DARKRED              = "#8b0000"
+    DARKMAGENTA          = "#8b008b"
+    SADDLEBROWN          = "#8b4513"
+    DARKSEAGREEN         = "#8fbc8f"
+    LIGHTGREEN           = "#90ee90"
+    MEDIUMPURPLE         = "#9370db"
+    DARKVIOLET           = "#9400d3"
+    PALEGREEN            = "#98fb98"
+    DARKORCHID           = "#9932cc"
+    SIENNA               = "#a0522d"
+    BROWN                = "#a52a2a"
+    DARKGRAY             = "#a9a9a9"
+    LIGHTBLUE            = "#add8e6"
+    GREENYELLOW          = "#adff2f"
+    PALETURQUOISE        = "#afeeee"
+    LIGHTSTEELBLUE       = "#b0c4de"
+    POWDERBLUE           = "#b0e0e6"
+    FIREBRICK            = "#b22222"
+    DARKGOLDENROD        = "#b8860b"
+    MEDIUMORCHID         = "#ba55d3"
+    ROSYBROWN            = "#bc8f8f"
+    DARKKHAKI            = "#bdb76b"
+    SILVER               = "#c0c0c0"
+    MEDIUMVIOLETRED      = "#c71585"
+    INDIANRED            = "#cd5c5c"
+    PERU                 = "#cd853f"
+    CHOCOLATE            = "#d2691e"
+    TAN                  = "#d2b48c"
+    LIGHTGRAY            = "#d3d3d3"
+    THISTLE              = "#d8bfd8"
+    ORCHID               = "#da70d6"
+    GOLDENROD            = "#daa520"
+    PALEVIOLETRED        = "#db7093"
+    CRIMSON              = "#dc143c"
+    GAINSBORO            = "#dcdcdc"
+    PLUM                 = "#dda0dd"
+    BURLYWOOD            = "#deb887"
+    LIGHTCYAN            = "#e0ffff"
+    LAVENDER             = "#e6e6fa"
+    DARKSALMON           = "#e9967a"
+    VIOLET               = "#ee82ee"
+    PALEGOLDENROD        = "#eee8aa"
+    LIGHTCORAL           = "#f08080"
+    KHAKI                = "#f0e68c"
+    ALICEBLUE            = "#f0f8ff"
+    HONEYDEW             = "#f0fff0"
+    AZURE                = "#f0ffff"
+    SANDYBROWN           = "#f4a460"
+    WHEAT                = "#f5deb3"
+    BEIGE                = "#f5f5dc"
+    WHITESMOKE           = "#f5f5f5"
+    MINTCREAM            = "#f5fffa"
+    GHOSTWHITE           = "#f8f8ff"
+    SALMON               = "#fa8072"
+    ANTIQUEWHITE         = "#faebd7"
+    LINEN                = "#faf0e6"
+    LIGHTGOLDENRODYELLOW = "#fafad2"
+    OLDLACE              = "#fdf5e6"
+    RED                  = "#ff0000"
+    FUCHSIA              = "#ff00ff"
+    DEEPPINK             = "#ff1493"
+    ORANGERED            = "#ff4500"
+    TOMATO               = "#ff6347"
+    HOTPINK              = "#ff69b4"
+    CORAL                = "#ff7f50"
+    DARKORANGE           = "#ff8c00"
+    LIGHTSALMON          = "#ffa07a"
+    ORANGE               = "#ffa500"
+    LIGHTPINK            = "#ffb6c1"
+    PINK                 = "#ffc0cb"
+    GOLD                 = "#ffd700"
+    PEACHPUFF            = "#ffdab9"
+    NAVAJOWHITE          = "#ffdead"
+    MOCCASIN             = "#ffe4b5"
+    BISQUE               = "#ffe4c4"
+    MISTYROSE            = "#ffe4e1"
+    BLANCHEDALMOND       = "#ffebcd"
+    PAPAYAWHIP           = "#ffefd5"
+    LAVENDERBLUSH        = "#fff0f5"
+    SEASHELL             = "#fff5ee"
+    CORNSILK             = "#fff8dc"
+    LEMONCHIFFON         = "#fffacd"
+    FLORALWHITE          = "#fffaf0"
+    SNOW                 = "#fffafa"
+    YELLOW               = "#ffff00"
+    LIGHTYELLOW          = "#ffffe0"
+    IVORY                = "#fffff0"
+    WHITE                = "#ffffff"
+    # <<< gen_color_constants: end
 
     _cn_dict = _COLOR_TABLE
 
@@ -992,6 +1134,45 @@ class PNGMode(IntEnum):
     AUTO = 0
     CAIROSVG = 1
     CHROME = 2
+
+    def __str__(self):
+        """让 f-string / print 直接输出取值（枚举 + 字符串双写法）。"""
+        return str(self.value)
+
+
+class FontEmbed:
+    """
+    字体嵌入方式（英文版新增，对应 ``pen.set_embed(fonts=...)``）。 / How a font FILE passed to ``font=`` is written into the SVG.
+
+    ``FontEmbed.SUBSET``（默认）只内嵌实际用到的那些字：SVG 小、换电脑也不掉字。
+    ``FontEmbed.EMBED`` 整份字体 base64 内嵌（最保险，中文字体动辄 +30% 体积）。
+    ``FontEmbed.LINK`` 不内嵌，只写字体文件的本地路径（最小，换电脑/挪路径会掉字）。
+
+    Three modes: SUBSET (default) embeds only the glyphs actually used, EMBED embeds
+    the whole file, LINK references the local file path without embedding anything.
+    """
+
+    SUBSET = "subset"
+    EMBED = "embed"
+    LINK = "link"
+
+    def __str__(self):
+        """让 f-string / print 直接输出取值（枚举 + 字符串双写法）。"""
+        return str(self.value)
+
+
+class ImageEmbed:
+    """
+    图片嵌入方式（英文版新增，对应 ``pen.set_embed(images=...)``）。 / How a local bitmap passed to ``image()`` is written into the SVG.
+
+    ``ImageEmbed.EMBED``（默认）base64 内嵌，SVG 自带图片、离线可看、换电脑不丢；
+    ``ImageEmbed.LINK`` 只引用本地图片路径（相对 SVG 所在目录），SVG 体积最小，
+    但图片挪走 / 换电脑就看不到了。 / EMBED inlines the bytes as base64 (default);
+    LINK references the file by a path relative to the SVG folder.
+    """
+
+    EMBED = "embed"
+    LINK = "link"
 
     def __str__(self):
         """让 f-string / print 直接输出取值（枚举 + 字符串双写法）。"""

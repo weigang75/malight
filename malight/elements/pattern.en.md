@@ -19,6 +19,18 @@ Pattern element: a tiling fill texture.
 |---|---|
 | `add_element(el)` | Add a shape to the pattern content. |
 | `append(el)` | Alias of add_element. |
+| `set_x(value)` | Set x; the same as `update(x=value)`. |
+| `get_x()` | Read the current raw x attribute. |
+| `set_y(value)` | Set y; the same as `update(y=value)`. |
+| `get_y()` | Read the current raw y attribute. |
+| `set_width(value)` | Set width; the same as `update(width=value)`. |
+| `get_width()` | Read the current raw width attribute. |
+| `set_height(value)` | Set height; the same as `update(height=value)`. |
+| `get_height()` | Read the current raw height attribute. |
+| `set_id_(value)` | Set id_; the same as `update(id_=value)`. |
+| `get_id_()` | Read the current raw id_ attribute. |
+| `set_units(value)` | Set units; the same as `update(units=value)`. |
+| `get_units()` | Read the current raw units attribute. |
 
 ---
 
@@ -96,4 +108,4 @@ if __name__ == "__main__":
 
 ## Sibling modules
 
-[base](base.en.md) ｜ [circle](circle.en.md) ｜ [clippath](clippath.en.md) ｜ [ellipse](ellipse.en.md) ｜ [group](group.en.md) ｜ [image](image.en.md) ｜ [line](line.en.md) ｜ [link](link.en.md) ｜ [marker](marker.en.md) ｜ [mask](mask.en.md) ｜ [path](path.en.md) ｜ [polygon](polygon.en.md) ｜ [polyline](polyline.en.md) ｜ [rect](rect.en.md) ｜ [svgimage](svgimage.en.md) ｜ [symbol](symbol.en.md) ｜ [text](text.en.md) ｜ [textpath](textpath.en.md) ｜ [use](use.en.md)
+[base](base.en.md) ｜ [circle](circle.en.md) ｜ [clippath](clippath.en.md) ｜ [ellipse](ellipse.en.md) ｜ [group](group.en.md) ｜ [image](image.en.md) ｜ [line](line.en.md) ｜ [link](link.en.md) ｜ [marker](marker.en.md) ｜ [mask](mask.en.md) ｜ [path](path.en.md) ｜ [polygon](polygon.en.md) ｜ [polyline](polyline.en.md) ｜ [rect](rect.en.md) ｜ [svggroup](svggroup.en.md) ｜ [svgimage](svgimage.en.md) ｜ [symbol](symbol.en.md) ｜ [text](text.en.md) ｜ [textpath](textpath.en.md) ｜ [use](use.en.md)

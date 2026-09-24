@@ -16,10 +16,10 @@ if __name__ == "__main__" and not __package__:
         _os.path.abspath(__file__)))))
     __package__ = "malight.elements"
 
-from .base import Element, _paint, _fmt_points, _fmt_transform, _Self
+from .base import Element, _paint, _fmt_points, _fmt_transform
 
 
-class GroupElement(Element):
+class GroupElement(Element["GroupElement"]):
     """
     组元素（对应中文版 `元素组`）：把多个元素打包，便于整体变换/动画。 / Group element: bundle elements so they can be transformed or animated together.
 
@@ -44,7 +44,7 @@ class GroupElement(Element):
         self._apply_common(kw)
         self._apply_paint(kw)
 
-    def add_element(self, el) -> _Self:
+    def add_element(self, el) -> "GroupElement":
         """
         把元素加入本组（对应中文版 `添加元素`）。 / Add an element to this group.
 
@@ -54,11 +54,11 @@ class GroupElement(Element):
         el.change_group(self)
         return self
 
-    def append(self, el) -> _Self:
+    def append(self, el) -> "GroupElement":
         """add_element 的别名（对应中文版 `append`）。 / Alias of add_element. """
         return self.add_element(el)
 
-    def remove_element(self, el) -> _Self:
+    def remove_element(self, el) -> "GroupElement":
         """从组中移除元素（对应中文版 `移除元素`）。 / Remove an element from the group. """
         if el.parent_node is self.node:
             el.remove()

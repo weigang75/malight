@@ -18,6 +18,20 @@ Marker element defining line-end decorations such as arrowheads.
 | Method | Description |
 |---|---|
 | `add_element(el)` | Add a shape to the marker content. |
+| `set_id_(value)` | Set id_; the same as `update(id_=value)`. |
+| `get_id_()` | Read the current raw id_ attribute. |
+| `set_ref_x(value)` | Set ref_x; the same as `update(ref_x=value)`. |
+| `get_ref_x()` | Read the current raw ref_x attribute. |
+| `set_ref_y(value)` | Set ref_y; the same as `update(ref_y=value)`. |
+| `get_ref_y()` | Read the current raw ref_y attribute. |
+| `set_marker_width(value)` | Set marker_width; the same as `update(marker_width=value)`. |
+| `get_marker_width()` | Read the current raw marker_width attribute. |
+| `set_marker_height(value)` | Set marker_height; the same as `update(marker_height=value)`. |
+| `get_marker_height()` | Read the current raw marker_height attribute. |
+| `set_orient(value)` | Set orient; the same as `update(orient=value)`. |
+| `get_orient()` | Read the current raw orient attribute. |
+| `set_marker_units(value)` | Set marker_units; the same as `update(marker_units=value)`. |
+| `get_marker_units()` | Read the current raw marker_units attribute. |
 
 ---
 
@@ -89,4 +103,4 @@ if __name__ == "__main__":
 
 ## Sibling modules
 
-[base](base.en.md) ｜ [circle](circle.en.md) ｜ [clippath](clippath.en.md) ｜ [ellipse](ellipse.en.md) ｜ [group](group.en.md) ｜ [image](image.en.md) ｜ [line](line.en.md) ｜ [link](link.en.md) ｜ [mask](mask.en.md) ｜ [path](path.en.md) ｜ [pattern](pattern.en.md) ｜ [polygon](polygon.en.md) ｜ [polyline](polyline.en.md) ｜ [rect](rect.en.md) ｜ [svgimage](svgimage.en.md) ｜ [symbol](symbol.en.md) ｜ [text](text.en.md) ｜ [textpath](textpath.en.md) ｜ [use](use.en.md)
+[base](base.en.md) ｜ [circle](circle.en.md) ｜ [clippath](clippath.en.md) ｜ [ellipse](ellipse.en.md) ｜ [group](group.en.md) ｜ [image](image.en.md) ｜ [line](line.en.md) ｜ [link](link.en.md) ｜ [mask](mask.en.md) ｜ [path](path.en.md) ｜ [pattern](pattern.en.md) ｜ [polygon](polygon.en.md) ｜ [polyline](polyline.en.md) ｜ [rect](rect.en.md) ｜ [svggroup](svggroup.en.md) ｜ [svgimage](svgimage.en.md) ｜ [symbol](symbol.en.md) ｜ [text](text.en.md) ｜ [textpath](textpath.en.md) ｜ [use](use.en.md)

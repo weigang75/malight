@@ -17,10 +17,10 @@ if __name__ == "__main__" and not __package__:
     __package__ = "malight.elements"
 
 from ..svg_backend import SvgNode
-from .base import Element, _paint, _fmt_points, _fmt_transform, _Self
+from .base import Element, _paint, _fmt_points, _fmt_transform
 
 
-class LinkElement(Element):
+class LinkElement(Element["LinkElement"]):
     """
     链接元素（<a>，对应中文版 `链接元素`）：点击元素打开网页。 / Link element: clicking the element opens a URL.
 
@@ -46,11 +46,12 @@ class LinkElement(Element):
         if description is not None:
             self._set_child_text("desc", description)
 
-    def _set_child_text(self, tag, text):
+    def _set_child_text(self, tag, text) -> "LinkElement":
         """
         设置或更新 ``<title>`` / ``<desc>`` 子元素（内部方法）。
 
         SVG 的悬停提示必须是子元素，写成属性浏览器不认，所以这里单独处理。
+        返回 self，链式标注写具体类名 —— IDE 点号后面才补得出 LinkElement 的方法。
         """
         for child in list(self.node.children):
             if child.tag == tag:
@@ -62,7 +63,7 @@ class LinkElement(Element):
         self.node.children.insert(0, node)
         return self
 
-    def wrap(self, el) -> _Self:
+    def wrap(self, el) -> "LinkElement":
         """
         把元素包进链接（对应中文版 `创建链接` 的主体逻辑）。 / Wrap an element in a link.
 
@@ -74,6 +75,38 @@ class LinkElement(Element):
         if el is not None:
             el.change_group(self)
         return self
+
+    # ------------------------------------------------------------------
+    # 参数访问器（显式方法，与动态合成的 set_/get_ 等价）。 / Parameter accessors, written out explicitly; identical to the
+    # 展开成真实方法是为了让 IDE 能补全、拼错能报错。 / dynamically synthesized set_/get_. Real methods so the IDE completes them and flags typos.
+    # 本区块由 tools/gen_attr_accessors.py 依 _update_attrs 生成。 / Generated from the _update_attrs signature by tools/gen_attr_accessors.py.
+    # 手改会被 `python tools/gen_attr_accessors.py --check` 判为不同步。 / Hand edits make that check report it as out of sync.
+    # ------------------------------------------------------------------
+    # >>> gen_attr_accessors: begin (generated, do not edit by hand)
+    def set_href(self, value) -> "LinkElement":
+        """设置 href（等价 ``update(href=value)``）。 / Set href; the same as ``update(href=value)``."""
+        return self.update(href=value)
+
+    def get_href(self) -> object:
+        """读取 href 的当前属性值。 / Read the current raw href attribute."""
+        return self._get_attr_value("href")
+
+    def set_tooltip(self, value) -> "LinkElement":
+        """设置 tooltip（等价 ``update(tooltip=value)``）。 / Set tooltip; the same as ``update(tooltip=value)``."""
+        return self.update(tooltip=value)
+
+    def get_tooltip(self) -> object:
+        """读取 tooltip 的当前属性值。 / Read the current raw tooltip attribute."""
+        return self._get_attr_value("tooltip")
+
+    def set_description(self, value) -> "LinkElement":
+        """设置 description（等价 ``update(description=value)``）。 / Set description; the same as ``update(description=value)``."""
+        return self.update(description=value)
+
+    def get_description(self) -> object:
+        """读取 description 的当前属性值。 / Read the current raw description attribute."""
+        return self._get_attr_value("description")
+    # <<< gen_attr_accessors: end
 
 # ===========================================================================
 # 使用示例

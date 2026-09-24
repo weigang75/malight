@@ -28,8 +28,9 @@ BoardCore —— MagicPen 核心类（Mixin）。
 | `get_config(name)` | 读取配置项（对应中文版 `获取配置项`）。 |
 | `use_toolkit(*names)` | 挂载扩展工具包（英文版新增，配合 malight.ext 扩展机制）。 |
 | `resize(width=None, height=None)` | 修改画布大小（对应中文版 `修改绘图板大小`）。 |
+| `set_embed(fonts=None, images=None)` | 设置「资源嵌入方式」（英文版新增）：字体与图片要不要写进 SVG。 |
 | `set_background_color(color)` | 设置画布背景色（对应中文版 `设置背景色`）。 |
-| `add_background_rect(fill_color, opacity=1.0, id_=None)` | 添加背景矩形（对应中文版 `矩形背景`，与 set_background_color 等价， 但可控制透明度并返回元素）。 |
+| `add_background_rect(fill_color, opacity=1.0, id_=None, **kw)` | 添加背景矩形（对应中文版 `矩形背景`，与 set_background_color 等价， 但可控制透明度并返回元素）。 |
 | `add_js(code)` | 添加 JavaScript 代码（对应中文版 `增加JS代码`），嵌入 `<script>`。 |
 | `write_app_info(x, y, font_size=14, fill_color=Color.BLACK, id_=None)` | 写软件签名信息（对应中文版 `写软件信息`）。 |
 | `author_seal(x=None, y=None, color='#c8102e', name='MagicPen', id_=None)` | 作者印章（对应中文版 `作者印章`）：圆形红印 + 名字。 |

@@ -18,6 +18,14 @@ Ellipse element.
 | Method | Description |
 |---|---|
 | `bbox()` | Bounding box, ignoring rotation. |
+| `set_x(value)` | Set x; the same as `update(x=value)`. |
+| `get_x()` | Read the current raw x attribute. |
+| `set_y(value)` | Set y; the same as `update(y=value)`. |
+| `get_y()` | Read the current raw y attribute. |
+| `set_radius(value)` | Set radius; the same as `update(radius=value)`. |
+| `get_radius()` | Read the current raw radius attribute. |
+| `set_rotate(value)` | Set rotate; the same as `update(rotate=value)`. |
+| `get_rotate()` | Read the current raw rotate attribute. |
 
 ---
 
@@ -74,4 +82,4 @@ if __name__ == "__main__":
 
 ## Sibling modules
 
-[base](base.en.md) ｜ [circle](circle.en.md) ｜ [clippath](clippath.en.md) ｜ [group](group.en.md) ｜ [image](image.en.md) ｜ [line](line.en.md) ｜ [link](link.en.md) ｜ [marker](marker.en.md) ｜ [mask](mask.en.md) ｜ [path](path.en.md) ｜ [pattern](pattern.en.md) ｜ [polygon](polygon.en.md) ｜ [polyline](polyline.en.md) ｜ [rect](rect.en.md) ｜ [svgimage](svgimage.en.md) ｜ [symbol](symbol.en.md) ｜ [text](text.en.md) ｜ [textpath](textpath.en.md) ｜ [use](use.en.md)
+[base](base.en.md) ｜ [circle](circle.en.md) ｜ [clippath](clippath.en.md) ｜ [group](group.en.md) ｜ [image](image.en.md) ｜ [line](line.en.md) ｜ [link](link.en.md) ｜ [marker](marker.en.md) ｜ [mask](mask.en.md) ｜ [path](path.en.md) ｜ [pattern](pattern.en.md) ｜ [polygon](polygon.en.md) ｜ [polyline](polyline.en.md) ｜ [rect](rect.en.md) ｜ [svggroup](svggroup.en.md) ｜ [svgimage](svgimage.en.md) ｜ [symbol](symbol.en.md) ｜ [text](text.en.md) ｜ [textpath](textpath.en.md) ｜ [use](use.en.md)

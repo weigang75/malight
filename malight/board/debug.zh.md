@@ -19,11 +19,11 @@ DebugMixin —— 调试辅助（网格/图框/测距/关键点）（方法名�
 
 | 方法 | 说明 |
 |---|---|
-| `measure(p1, p2, color=None, font_size=16, bg_color=None, line_width=3, decimals=2, id_=None)` | 两点间测距标注（对应中文版 `测距`，调试用）。 |
-| `grid(spacing=20, color='#b0c4de', opacity=0.6, id_=None)` | 显示网格（对应中文版 `显示网格`，调试用）。 |
-| `frame(color='#ff6347', stroke_width=1)` | 显示画布边框（对应中文版 `显示图框`，调试用）。 |
-| `mark_point(x, y, color=Color.RED, style=PointStyle.…, font_size=12, label=None, id_=None)` | 画定位点标记（对应中文版 `定位点`/`定位坐标`，调试用）。 |
-| `key_points(points, color=Color.BLACK)` | 批量显示关键点坐标（对应中文版 `显示关键点`，调试用）。 |
+| `measure(p1, p2, color=None, font_size=16, bg_color=None, line_width=3, decimals=2, id_=None, **kw)` | 两点间测距标注（对应中文版 `测距`，调试用）。 |
+| `grid(spacing=20, color='#b0c4de', opacity=0.6, id_=None, **kw)` | 显示网格（对应中文版 `显示网格`，调试用）。 |
+| `frame(color='#ff6347', stroke_width=1, id_=None, **kw)` | 显示画布边框（对应中文版 `显示图框`，调试用）。 |
+| `mark_point(x, y, color=Color.RED, style=PointStyle.…, font_size=12, label=None, id_=None, **kw)` | 画定位点标记（对应中文版 `定位点`/`定位坐标`，调试用）。 |
+| `key_points(points, color=Color.BLACK, id_=None, **kw)` | 批量显示关键点坐标（对应中文版 `显示关键点`，调试用）。 |
 
 ---
 

@@ -20,12 +20,12 @@ ContainerMixin - container elements (g / symbol / use / pattern / marker / a).
 | Method | Description |
 |---|---|
 | `g(class_name=None, style_str=None, opacity=None, blend_mode=None, filter=None, id_=None, **kw)` | Create a group element. |
-| `symbol(id_=None, view_box=None)` | Create a symbol (reusable template). |
+| `symbol(id_=None, view_box=None, **kw)` | Create a symbol (reusable template). |
 | `use(template_id, x=None, y=None, width=None, height=None, **kw)` | Instantiate a symbol with a `<use>` element. |
 | `pattern(x, y, width, height, id_=None, **kw)` | Create a tiling pattern fill. |
 | `copy(el, x=None, y=None, opacity=1.0, id_=None)` | Duplicate an element, optionally with an offset. |
 | `a(el, url, tooltip=None, description=None, id_=None)` | Wrap an element in a hyperlink. |
-| `marker(id_=None, ref_x=0, ref_y=0, width=10, height=10, orient='auto', marker_units=None)` | Create a line-end marker such as an arrowhead. |
+| `marker(id_=None, ref_x=0, ref_y=0, width=10, height=10, orient='auto', marker_units=None, **kw)` | Create a line-end marker such as an arrowhead. |
 
 ---
 

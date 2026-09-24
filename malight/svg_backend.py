@@ -19,16 +19,16 @@ A tiny SVG element and serialisation backend (internal).
     print(node.to_xml())     # <circle cx="10" cy="20" r="5" fill="red"/>
 """
 
-from typing import Optional
+from typing import Iterator, Optional
 from xml.sax.saxutils import escape
 
 
-def fmt_num(value, keep=2):
+def fmt_num(value, keep=4):
     """
     数值格式化：保留小数、去掉多余的 0。 / Format a number, keeping its decimals and trimming redundant zeros.
 
     :param value: 数值或数值字符串
-    :param keep: 保留小数位数（默认 2）
+    :param keep: 保留小数位数（默认 4）
     :return: 简洁的数字字符串，如 "12.5"、"100"
 
     示例::
@@ -143,6 +143,35 @@ class SvgNode:
             self.children.remove(child)
         except ValueError:
             pass
+
+    # ---------------------------------------------------------------
+    # 树遍历
+    # ---------------------------------------------------------------
+    # 本类只放「节点自己的操作」：标签、属性、子节点、序列化。SVG 图形的语义
+    # （换色 / 改文本）属于元素层 —— 导入的 SVG 组是 SvgGroupElement，它才有
+    # 一份颜色表；普通节点不该凭空长出一个 replace_color。
+    # ---------------------------------------------------------------
+    def walk(self) -> "Iterator[SvgNode]":
+        """
+        深度优先遍历自身与全部子节点。 / Walk this node and every descendant, depth first.
+
+        :return: 生成器，逐个产出 SvgNode
+
+        与 ``add`` / ``set`` / ``find`` / ``to_xml`` 同层，都是「节点本身」的
+        操作：任何节点都能遍历自己的孩子。要改颜色请用元素层的
+        `SvgGroupElement.replace_color` —— 颜色是图形自己的属性，节点没有
+        颜色表。 / On the same level as add / set / find / to_xml: every node
+        can walk its children. Recolouring belongs to the element layer, i.e.
+        SvgGroupElement.
+
+        示例::
+            for n in group.node.walk():
+                print(n.tag, n.attribs.get("fill"))
+        """
+        yield self
+        for child in self.children:
+            if isinstance(child, SvgNode):
+                yield from child.walk()
 
     # ---------------------------------------------------------------
     # 序列化

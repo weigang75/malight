@@ -19,10 +19,10 @@ ImageMixin - images (bitmap `<image>` and SVG import).
 
 | Method | Description |
 |---|---|
-| `image(image_file, x=0, y=0, width=None, height=None, opacity=1.0, rendering=None, aspect=None, external=False, blend_mode=None, filter=None, id_=None, **extra)` | Place a bitmap; local files are base64-embedded automatically. |
-| `paste_svg(svg_file, x=0, y=0, width=None, height=None, opacity=None, blend_mode=None, filter=None, id_=None)` | Place an SVG file as an image. |
-| `import_svg_as_group(svg_file, x=0, y=0, scale=None)` | Parse an SVG file into an editable group. |
-| `import_svg_as_symbol(svg_file, id_=None)` | Register an SVG file as a symbol, then reuse it with pen.template(id). |
+| `image(image_file, x=0, y=0, width=None, height=None, opacity=1.0, rendering=None, aspect=None, external=False, embed=None, blend_mode=None, filter=None, id_=None, **extra)` | Place a bitmap; local files are base64-embedded automatically. |
+| `svg_image(svg_file='', x=0, y=0, width=None, height=None, opacity=None, blend_mode=None, filter=None, svg_text=None, id_=None, **kw)` | Place an SVG file and return an SVG image element whose source text can be rewritten. |
+| `import_svg_as_group(svg_file, x=0, y=0, scale=None, **kw)` | Import an SVG file as an editable group element. |
+| `import_svg_as_symbol(svg_file, id_=None, **kw)` | Register an SVG file as a symbol, then reuse it with pen.template(id). |
 
 ---
 

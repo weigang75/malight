@@ -43,6 +43,7 @@ SVG 节点：标签 + 属性字典 + 子节点列表。
 | `set(key, value)` | 设置属性值。值为 None 时删除该属性（便于条件属性）。 |
 | `find(node_id)` | 按 id 递归查找子节点；找不到返回 None。 |
 | `remove_child(child)` | 移除指定子节点（不抛错）。 |
+| `walk()` | 深度优先遍历自身与全部子节点。 |
 | `to_xml(indent=0, pretty=True)` | 序列化为 XML 字符串。 |
 
 ---

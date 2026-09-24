@@ -19,6 +19,12 @@ Symbol element defining a reusable graphic.
 |---|---|
 | `add_element(el)` | Add a shape to the symbol content. |
 | `append(el)` | Alias of add_element. |
+| `add(el)` | Alias of add_element. |
+| `clone(x=None, y=None, width=None, height=None, **kw)` | Stamp an instance of this template with `<use>` and return the UseElement. |
+| `set_view_box(value)` | Set view_box; the same as `update(view_box=value)`. |
+| `get_view_box()` | Read the current raw view_box attribute. |
+| `set_id_(value)` | Set id_; the same as `update(id_=value)`. |
+| `get_id_()` | Read the current raw id_ attribute. |
 
 ---
 
@@ -67,11 +73,18 @@ if __name__ == "__main__":
 
     # -----------------------------------------------------------------
     # 4) An external SVG file can be registered as a template too
+    #    recolour through the tools functions on its node: one edit updates every <use> instance
     # -----------------------------------------------------------------
     icon = os.path.join(_out, "sample_icon.svg")
     if os.path.exists(icon):
-        pen.import_svg_as_symbol(icon, id_="icon_tpl")
+        from malight.tools import replace_svg_node_color, svg_node_colors
+
+        tpl_icon = pen.import_svg_as_symbol(icon, id_="icon_tpl")
+        print("colours inside the template:",
+              svg_node_colors(tpl_icon.node))
+        replace_svg_node_color(tpl_icon.node, "white", "#ff0000")
         pen.use("icon_tpl", x=430, y=210, width=150, height=100)
+        pen.use("icon_tpl", x=430, y=300, width=100, height=67)
 
     # -----------------------------------------------------------------
     # 5) Partial update: the template viewBox resets every instance's scaling
@@ -81,6 +94,14 @@ if __name__ == "__main__":
     pen.use("dot_tpl", x=60, y=300, width=40, height=40)
     pen.use("dot_tpl", x=120, y=300, width=40, height=40, opacity=0.5)
 
+    # -----------------------------------------------------------------
+    # 6) Turn an existing element into a template (to_template + clone)
+    # -----------------------------------------------------------------
+    dot = pen.circle(400, 320, 26, fill_color=ColorName.STEELBLUE)
+    tpl = dot.to_template()              # into defs, not drawn yet
+    tpl.clone()                          # one stamp, same place and size
+    tpl.clone(x=480, width=42).fx_shadow(2, 2, 3)   # moved, scaled, own filter
+
     pen.finish()
 ```
 
@@ -88,4 +109,4 @@ if __name__ == "__main__":
 
 ## Sibling modules
 
-[base](base.en.md) ｜ [circle](circle.en.md) ｜ [clippath](clippath.en.md) ｜ [ellipse](ellipse.en.md) ｜ [group](group.en.md) ｜ [image](image.en.md) ｜ [line](line.en.md) ｜ [link](link.en.md) ｜ [marker](marker.en.md) ｜ [mask](mask.en.md) ｜ [path](path.en.md) ｜ [pattern](pattern.en.md) ｜ [polygon](polygon.en.md) ｜ [polyline](polyline.en.md) ｜ [rect](rect.en.md) ｜ [svgimage](svgimage.en.md) ｜ [text](text.en.md) ｜ [textpath](textpath.en.md) ｜ [use](use.en.md)
+[base](base.en.md) ｜ [circle](circle.en.md) ｜ [clippath](clippath.en.md) ｜ [ellipse](ellipse.en.md) ｜ [group](group.en.md) ｜ [image](image.en.md) ｜ [line](line.en.md) ｜ [link](link.en.md) ｜ [marker](marker.en.md) ｜ [mask](mask.en.md) ｜ [path](path.en.md) ｜ [pattern](pattern.en.md) ｜ [polygon](polygon.en.md) ｜ [polyline](polyline.en.md) ｜ [rect](rect.en.md) ｜ [svggroup](svggroup.en.md) ｜ [svgimage](svgimage.en.md) ｜ [text](text.en.md) ｜ [textpath](textpath.en.md) ｜ [use](use.en.md)

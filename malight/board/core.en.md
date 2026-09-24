@@ -30,8 +30,9 @@ BoardCore - the MagicPen core class (a mixin).
 | `get_config(name)` | Read a config entry. |
 | `use_toolkit(*names)` | Mount an extension toolkit, used with the malight.ext mechanism. |
 | `resize(width=None, height=None)` | Resize the canvas. |
+| `set_embed(fonts=None, images=None)` | Choose how fonts and images are written into the SVG (English-edition addition). |
 | `set_background_color(color)` | Set the canvas background color. |
-| `add_background_rect(fill_color, opacity=1.0, id_=None)` | Add a background rectangle; unlike set_background_color it takes opacity and returns the element. |
+| `add_background_rect(fill_color, opacity=1.0, id_=None, **kw)` | Add a background rectangle; unlike set_background_color it takes opacity and returns the element. |
 | `add_js(code)` | Embed JavaScript by adding a `<script>` element. |
 | `write_app_info(x, y, font_size=14, fill_color=Color.BLACK, id_=None)` | Write a software signature. |
 | `author_seal(x=None, y=None, color='#c8102e', name='MagicPen', id_=None)` | Author stamp: a round red seal plus a name. |

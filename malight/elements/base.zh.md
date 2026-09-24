@@ -56,6 +56,7 @@
 | `get_style_str()` | 读取内联 CSS 的当前属性值。 |
 | `set_id(id_)` | 设置元素 id（可用于 get_element(id) 反查）。 |
 | `set_filter(f, merge=True)` | 给元素绑定滤镜，**多次调用会叠加而不是覆盖**（英文版新增，配合 pen.fx 滤镜工厂）。 |
+| `get_filter()` | 读取滤镜属性的当前值（如 `"url(#fx_1)"`；没滤镜返回 None）。 |
 | `fx_chain(pad=0.4)` | 取出本元素绑定的滤镜链，没有就新建一条并绑定（返回 FilterChain）。 |
 | `fx(name, *args, **kwargs)` | 按名字叠加任意滤镜效果（通用入口）。 |
 | `fx_blur(std_deviation=3)` | 叠加高斯模糊（等价 pen.fx.blur）。 |
@@ -101,6 +102,7 @@
 | `send_to_back()` | 置底（英文版新增）：移到父容器的第一个。 |
 | `change_group(new_parent)` | 把元素移动到另一个组（对应中文版 `更换组`）。 |
 | `to_group(id_=None)` | 把本元素原地包进一个新组并返回该组（英文版新增）。 |
+| `to_template(id_=None, view_box=None)` | 把本元素原地转成 `<symbol>` 模板并返回该模板（英文版新增）。 |
 | `clone(dx=0, dy=0, id_=None)` | 克隆元素（对应中文版 `克隆`），可指定偏移与新 id。 |
 | `update(**kw)` | 按需更新元素属性（英文版新增：只改传入的项，其余保持原值）。 |
 | `bbox()` | 元素包围盒 (min_x, min_y, max_x, max_y)；无法确定时返回 None。 |
@@ -185,10 +187,15 @@ if __name__ == "__main__":
 # elements.__init__ 保证 base 先于 group 导入，运行时不会触发循环。
 # ---------------------------------------------------------------------------
 from .group import GroupElement  # noqa: E402
+
+# ---------------------------------------------------------------------------
+# 底部导入（续）：to_template() 的返回注解同理引用 TemplateElement。
+# ---------------------------------------------------------------------------
+from .symbol import TemplateElement  # noqa: E402
 ```
 
 ---
 
 ## 同级模块
 
-[circle](circle.zh.md) ｜ [clippath](clippath.zh.md) ｜ [ellipse](ellipse.zh.md) ｜ [group](group.zh.md) ｜ [image](image.zh.md) ｜ [line](line.zh.md) ｜ [link](link.zh.md) ｜ [marker](marker.zh.md) ｜ [mask](mask.zh.md) ｜ [path](path.zh.md) ｜ [pattern](pattern.zh.md) ｜ [polygon](polygon.zh.md) ｜ [polyline](polyline.zh.md) ｜ [rect](rect.zh.md) ｜ [svgimage](svgimage.zh.md) ｜ [symbol](symbol.zh.md) ｜ [text](text.zh.md) ｜ [textpath](textpath.zh.md) ｜ [use](use.zh.md)
+[circle](circle.zh.md) ｜ [clippath](clippath.zh.md) ｜ [ellipse](ellipse.zh.md) ｜ [group](group.zh.md) ｜ [image](image.zh.md) ｜ [line](line.zh.md) ｜ [link](link.zh.md) ｜ [marker](marker.zh.md) ｜ [mask](mask.zh.md) ｜ [path](path.zh.md) ｜ [pattern](pattern.zh.md) ｜ [polygon](polygon.zh.md) ｜ [polyline](polyline.zh.md) ｜ [rect](rect.zh.md) ｜ [svggroup](svggroup.zh.md) ｜ [svgimage](svgimage.zh.md) ｜ [symbol](symbol.zh.md) ｜ [text](text.zh.md) ｜ [textpath](textpath.zh.md) ｜ [use](use.zh.md)

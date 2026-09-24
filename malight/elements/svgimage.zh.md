@@ -13,7 +13,26 @@ SVGImageElement 元素（每类一文件，含中文注释与示例）。
 
 ### `SVGImageElement`
 
-SVG 图片元素（对应中文版 `SVG图元素`）：把另一个 SVG 文件作为图像嵌入。
+SVG 图片元素（对应中文版 `SVG图元素`）：把另一个 SVG 文件作为图像嵌入，并且**能改它的源文本** —— 同一个文件换上不同颜色反复复用。
+
+| 方法 | 说明 |
+|---|---|
+| `get_svg_text()` | 读取当前 SVG 源文本（换色改的就是这一份）。 |
+| `set_svg_text(text)` | 整段替换 SVG 源文本并重新内嵌。 |
+| `replace_text(old, new, *, count=…, warn=…)` | 把 SVG 文本里的 old 原样替换成 new。 |
+| `replace_color(old, new, *, count=…, warn=…)` | 把 SVG 文本里的某一种颜色换成另一种（对应中文版 `颜色替换`）。 |
+| `replace_colors(mapping, *, count=…, warn=…)` | 批量换色：一次改完 {旧色: 新色} 里列的所有颜色（相当于中文版 `颜色替换` 连调多次）。 |
+| `svg_colors()` | 列出这个 SVG 用到的颜色（归一成小写 `#rrggbb`，按首次出现顺序）。 |
+| `set_svg_file(value)` | 设置 svg_file（等价 `update(svg_file=value)`）。 |
+| `get_svg_file()` | 读取 svg_file 的当前属性值。 |
+| `set_x(value)` | 设置 x（等价 `update(x=value)`）。 |
+| `get_x()` | 读取 x 的当前属性值。 |
+| `set_y(value)` | 设置 y（等价 `update(y=value)`）。 |
+| `get_y()` | 读取 y 的当前属性值。 |
+| `set_width(value)` | 设置 width（等价 `update(width=value)`）。 |
+| `get_width()` | 读取 width 的当前属性值。 |
+| `set_height(value)` | 设置 height（等价 `update(height=value)`）。 |
+| `get_height()` | 读取 height 的当前属性值。 |
 
 ---
 
@@ -45,23 +64,36 @@ if __name__ == "__main__":
 
     # 1) 把 SVG 文件当图片贴上去：保持矢量，放大不糊
     #    （内部转成 data:image/svg+xml;base64 内嵌，离线可用）
-    pen.paste_svg(icon_path, x=50, y=60, width=180, height=120)
+    pen.svg_image(icon_path, x=50, y=60, width=180, height=120)
 
-    # 2) 只给位置 = 用 SVG 原始尺寸
-    pen.paste_svg(icon_path, x=300, y=60)
+    # 2) 只给宽：高按 SVG 自身比例自动算
+    pen.svg_image(icon_path, x=300, y=60, width=180)
 
     # 3) 缩放 + 透明度 + 滤镜
-    img = pen.paste_svg(icon_path, x=80, y=220, width=140, height=90,
+    img = pen.svg_image(icon_path, x=60, y=210, width=140, height=90,
                         opacity=0.85, filter=pen.fx.shadow(5, 6, 6))
     print("SVG 图元素 bbox:", tuple(round(v, 1) for v in img.bbox()))
 
-    # 4) 局部更新：只改尺寸，位置与内嵌数据不动
-    img.update(width=200, height=130)
+    # 4) 局部更新：只改尺寸，位置与内嵌数据都不动
+    img.update(width=200, height=120)
     print("更新后 bbox:", tuple(round(v, 1) for v in img.bbox()))
 
-    # 5) 想「拆开二次编辑」而不是当图片用 → import_svg_as_group
-    grp = pen.import_svg_as_group(icon_path, x=380, y=230, scale=1.2)
-    print("导入为组后的子节点数:", len(grp.children))
+    # 5) 同一个 SVG 文件换色复用：改的是该元素自己那份文本，各改各的互不影响
+    badge = pen.svg_image(icon_path, x=300, y=210, width=80)
+    print("文件里用到的颜色:", badge.svg_colors())
+    badge.replace_color("white", "#ff6b6b")               # white -> red
+    pen.svg_image(icon_path, x=400, y=210, width=80).replace_color("white", "#51cf66")
+    pen.svg_image(icon_path, x=500, y=210, width=80).replace_colors({"white": "#cc5de8", "#4dabf7": "#845ef7"})
+    print("换色后:", badge.svg_colors())
+
+    # 6) 想「拆开二次编辑」而不是当图片用 → import_svg_as_group
+    #    拿到的是组元素（能变换）；换色走 tools 函数，因为换色只属于上面那条自带文本的通道
+    grp = pen.import_svg_as_group(icon_path, x=400, y=120, scale=0.7)
+    print("导入为组后的节点数:", len(list(grp.walk())))
+    from malight.tools import replace_svg_node_color
+    replace_svg_node_color(grp.node, "#4dabf7", "#845ef7")
+    print("导入为组后 bbox:",
+          tuple(round(v, 1) for v in grp.bbox()))
 
     pen.finish()
 ```
@@ -70,4 +102,4 @@ if __name__ == "__main__":
 
 ## 同级模块
 
-[base](base.zh.md) ｜ [circle](circle.zh.md) ｜ [clippath](clippath.zh.md) ｜ [ellipse](ellipse.zh.md) ｜ [group](group.zh.md) ｜ [image](image.zh.md) ｜ [line](line.zh.md) ｜ [link](link.zh.md) ｜ [marker](marker.zh.md) ｜ [mask](mask.zh.md) ｜ [path](path.zh.md) ｜ [pattern](pattern.zh.md) ｜ [polygon](polygon.zh.md) ｜ [polyline](polyline.zh.md) ｜ [rect](rect.zh.md) ｜ [symbol](symbol.zh.md) ｜ [text](text.zh.md) ｜ [textpath](textpath.zh.md) ｜ [use](use.zh.md)
+[base](base.zh.md) ｜ [circle](circle.zh.md) ｜ [clippath](clippath.zh.md) ｜ [ellipse](ellipse.zh.md) ｜ [group](group.zh.md) ｜ [image](image.zh.md) ｜ [line](line.zh.md) ｜ [link](link.zh.md) ｜ [marker](marker.zh.md) ｜ [mask](mask.zh.md) ｜ [path](path.zh.md) ｜ [pattern](pattern.zh.md) ｜ [polygon](polygon.zh.md) ｜ [polyline](polyline.zh.md) ｜ [rect](rect.zh.md) ｜ [svggroup](svggroup.zh.md) ｜ [symbol](symbol.zh.md) ｜ [text](text.zh.md) ｜ [textpath](textpath.zh.md) ｜ [use](use.zh.md)

@@ -62,7 +62,9 @@ separated by `;`) adds more folders. Lookups go through `malight.asset_path` /
 | Function | Description |
 |---|---|
 | `font_face_css` | Build the embedded @font-face CSS for a font file, base64-encoding the font into the SVG. |
+| `font_link_css` | Build a non-embedding @font-face CSS that points at the local font file. |
 | `subset_font` | Subset a font file to the characters actually used (requires fontTools), which shrinks embedded output a lot. |
+| `subset_font_bytes` | Subset a font and return the bytes without touching disk; internal helper. |
 | `font_search_dirs` | Font-file search directories, by priority, before the system font folders. |
 | `find_font_file` | Find a font file in the font directories. |
 

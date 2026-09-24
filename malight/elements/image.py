@@ -17,10 +17,10 @@ if __name__ == "__main__" and not __package__:
     __package__ = "malight.elements"
 
 from ..definitions import value_of
-from .base import Element, _paint, _fmt_points, _fmt_transform, _Self
+from .base import Element, _paint, _fmt_points, _fmt_transform
 
 
-class ImageElement(Element):
+class ImageElement(Element["ImageElement"]):
     """
     位图图像元素（对应中文版 `图元素`）。 / Bitmap image element.
 
@@ -35,12 +35,38 @@ class ImageElement(Element):
         self._update_attrs(href=href, x=x, y=y, width=width, height=height, **kw)
 
     def _update_attrs(self, href="", x=0, y=0, width=None, height=None,
-                      aspect=None, rendering=None, external=False, **kw):
-        """写入图像属性（内部方法）。"""
+                      aspect=None, rendering=None, external=False, embed=None, **kw):
+        """
+        写入图像属性（内部方法）。
+
+        本地图片按画板的 ``images=`` 设置决定「内嵌成 base64」（默认
+        ``ImageEmbed.EMBED``）还是「只引用路径」（``ImageEmbed.LINK``）；
+        http(s) 地址与 ``data:`` 一律原样引用。 / Local files are embedded as
+        base64 by default; ``ImageEmbed.LINK`` references the path instead.
+        """
+        import os
         self._apply_common({"id_": kw.pop("id_", None)})
         self._apply_common(kw)
-        from ..tools import image_to_data_uri
-        url = href if external or str(href).startswith("http") else image_to_data_uri(href)
+        from ..definitions import ImageEmbed
+        from ..tools import image_to_data_uri, linked_path
+        from ..i18n import t
+        src = str(href)
+        mode = str(embed if embed is not None else
+                   getattr(self.board, "image_embed", ImageEmbed.EMBED))
+        if external or src.startswith(("http", "data:")):
+            url = href
+        elif mode == ImageEmbed.LINK:
+            url = linked_path(src, getattr(self.board, "file_path", None))
+            # 每种图片只提醒一次，避免一张图贴 N 次就刷 N 行
+            seen = getattr(self.board, "_linked_notes", None)
+            if seen is None:
+                seen = self.board._linked_notes = set()
+            key = os.path.abspath(src)
+            if key not in seen:
+                seen.add(key)
+                print(t("info.image_linked", name=os.path.basename(key)))
+        else:
+            url = image_to_data_uri(href)
         self.node.set("href", url)
         self.node.set("{http://www.w3.org/1999/xlink}href", url)
         self.node.set("x", x)
@@ -68,6 +94,86 @@ class ImageElement(Element):
         w = float(self.node.attribs.get("width", 0))
         h = float(self.node.attribs.get("height", 0))
         return (x, y, x + w, y + h)
+
+    # ------------------------------------------------------------------
+    # 参数访问器（显式方法，与动态合成的 set_/get_ 等价）。 / Parameter accessors, written out explicitly; identical to the
+    # 展开成真实方法是为了让 IDE 能补全、拼错能报错。 / dynamically synthesized set_/get_. Real methods so the IDE completes them and flags typos.
+    # 本区块由 tools/gen_attr_accessors.py 依 _update_attrs 生成。 / Generated from the _update_attrs signature by tools/gen_attr_accessors.py.
+    # 手改会被 `python tools/gen_attr_accessors.py --check` 判为不同步。 / Hand edits make that check report it as out of sync.
+    # ------------------------------------------------------------------
+    # >>> gen_attr_accessors: begin (generated, do not edit by hand)
+    def set_href(self, value) -> "ImageElement":
+        """设置 href（等价 ``update(href=value)``）。 / Set href; the same as ``update(href=value)``."""
+        return self.update(href=value)
+
+    def get_href(self) -> object:
+        """读取 href 的当前属性值。 / Read the current raw href attribute."""
+        return self._get_attr_value("href")
+
+    def set_x(self, value) -> "ImageElement":
+        """设置 x（等价 ``update(x=value)``）。 / Set x; the same as ``update(x=value)``."""
+        return self.update(x=value)
+
+    def get_x(self) -> object:
+        """读取 x 的当前属性值。 / Read the current raw x attribute."""
+        return self._get_attr_value("x")
+
+    def set_y(self, value) -> "ImageElement":
+        """设置 y（等价 ``update(y=value)``）。 / Set y; the same as ``update(y=value)``."""
+        return self.update(y=value)
+
+    def get_y(self) -> object:
+        """读取 y 的当前属性值。 / Read the current raw y attribute."""
+        return self._get_attr_value("y")
+
+    def set_width(self, value) -> "ImageElement":
+        """设置 width（等价 ``update(width=value)``）。 / Set width; the same as ``update(width=value)``."""
+        return self.update(width=value)
+
+    def get_width(self) -> object:
+        """读取 width 的当前属性值。 / Read the current raw width attribute."""
+        return self._get_attr_value("width")
+
+    def set_height(self, value) -> "ImageElement":
+        """设置 height（等价 ``update(height=value)``）。 / Set height; the same as ``update(height=value)``."""
+        return self.update(height=value)
+
+    def get_height(self) -> object:
+        """读取 height 的当前属性值。 / Read the current raw height attribute."""
+        return self._get_attr_value("height")
+
+    def set_aspect(self, value) -> "ImageElement":
+        """设置 aspect（等价 ``update(aspect=value)``）。 / Set aspect; the same as ``update(aspect=value)``."""
+        return self.update(aspect=value)
+
+    def get_aspect(self) -> object:
+        """读取 aspect 的当前属性值。 / Read the current raw aspect attribute."""
+        return self._get_attr_value("aspect")
+
+    def set_rendering(self, value) -> "ImageElement":
+        """设置 rendering（等价 ``update(rendering=value)``）。 / Set rendering; the same as ``update(rendering=value)``."""
+        return self.update(rendering=value)
+
+    def get_rendering(self) -> object:
+        """读取 rendering 的当前属性值。 / Read the current raw rendering attribute."""
+        return self._get_attr_value("rendering")
+
+    def set_external(self, value) -> "ImageElement":
+        """设置 external（等价 ``update(external=value)``）。 / Set external; the same as ``update(external=value)``."""
+        return self.update(external=value)
+
+    def get_external(self) -> object:
+        """读取 external 的当前属性值。 / Read the current raw external attribute."""
+        return self._get_attr_value("external")
+
+    def set_embed(self, value) -> "ImageElement":
+        """设置 embed（等价 ``update(embed=value)``）。 / Set embed; the same as ``update(embed=value)``."""
+        return self.update(embed=value)
+
+    def get_embed(self) -> object:
+        """读取 embed 的当前属性值。 / Read the current raw embed attribute."""
+        return self._get_attr_value("embed")
+    # <<< gen_attr_accessors: end
 
 # ===========================================================================
 # 使用示例

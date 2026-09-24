@@ -24,7 +24,7 @@ ShapeMixin —— 基本图形（SVG 元素命名：circle/ellipse/rect/...）�
 | `rect(x, y, width, height, corner_radius=None, fill_color=Color.TRANS…, stroke_color=Color.BLACK, stroke_width=1, stroke_style=None, stroke_cap=None, stroke_join=None, fill_rule=None, dash_offset=None, blend_mode=None, filter=None, opacity=1.0, rotate=None, id_=None, **extra)` | 画矩形（对应中文版 `画矩形`）。 |
 | `square(x, y, side, **kw)` | 画正方形（对应中文版 `画正方形`）。 |
 | `line(start, end, stroke_color=Color.BLACK, fill_color=Color.TRANS…, stroke_width=1, stroke_style=None, stroke_cap=None, stroke_join=None, dash_offset=None, blend_mode=None, filter=None, opacity=1.0, id_=None, **extra)` | 画一条线段（对应中文版 `画线`/`画直线`）。 |
-| `cross(x, y, width=5, height=5, color=Color.BLACK, stroke_width=1, id_=None)` | 画十字标记（对应中文版 `十字`），常用于标注关键点。 |
+| `cross(x, y, width=5, height=5, color=Color.BLACK, stroke_width=1, id_=None, **kw)` | 画十字标记（对应中文版 `十字`），常用于标注关键点。 |
 | `polyline(points, fill_color=Color.TRANS…, stroke_color=Color.BLACK, stroke_width=1, stroke_style=None, stroke_cap=None, stroke_join=None, dash_offset=None, blend_mode=None, filter=None, opacity=1.0, id_=None, **extra)` | 画折线元素（顶点直连，对应中文版 `画折线`）。 |
 | `polygon(points, fill_color=Color.TRANS…, stroke_color=Color.BLACK, stroke_width=1, stroke_style=None, stroke_cap=None, stroke_join=None, fill_rule=None, dash_offset=None, blend_mode=None, filter=None, opacity=1.0, id_=None, **extra)` | 画多边形（自动闭合，对应中文版 `画多边形`）。 |
 | `regular_polygon(x, y, radius, n, stroke_color=Color.BLACK, fill_color=Color.TRANS…, stroke_width=1, opacity=1.0, id_=None, **extra)` | 画正 N 边形（对应中文版 `画正N边形`）。 |

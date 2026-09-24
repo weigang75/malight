@@ -19,11 +19,11 @@ DebugMixin - debugging helpers (grids, frames, measurements, key points).
 
 | Method | Description |
 |---|---|
-| `measure(p1, p2, color=None, font_size=16, bg_color=None, line_width=3, decimals=2, id_=None)` | Annotate the distance between two points. |
-| `grid(spacing=20, color='#b0c4de', opacity=0.6, id_=None)` | Draw a grid. |
-| `frame(color='#ff6347', stroke_width=1)` | Draw the canvas frame. |
-| `mark_point(x, y, color=Color.RED, style=PointStyle.…, font_size=12, label=None, id_=None)` | Draw a point marker. |
-| `key_points(points, color=Color.BLACK)` | Label the coordinates of several key points. |
+| `measure(p1, p2, color=None, font_size=16, bg_color=None, line_width=3, decimals=2, id_=None, **kw)` | Annotate the distance between two points. |
+| `grid(spacing=20, color='#b0c4de', opacity=0.6, id_=None, **kw)` | Draw a grid. |
+| `frame(color='#ff6347', stroke_width=1, id_=None, **kw)` | Draw the canvas frame. |
+| `mark_point(x, y, color=Color.RED, style=PointStyle.…, font_size=12, label=None, id_=None, **kw)` | Draw a point marker. |
+| `key_points(points, color=Color.BLACK, id_=None, **kw)` | Label the coordinates of several key points. |
 
 ---
 

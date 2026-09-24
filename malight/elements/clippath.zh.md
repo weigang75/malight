@@ -18,6 +18,12 @@ ClipPathElement 元素（每类一文件，含中文注释与示例）。
 | 方法 | 说明 |
 |---|---|
 | `apply_to(targets)` | 把裁剪应用到目标元素（可为单个或列表）。 |
+| `set_clip_shape(value)` | 设置 clip_shape（等价 `update(clip_shape=value)`）。 |
+| `get_clip_shape()` | 读取 clip_shape 的当前属性值。 |
+| `set_units(value)` | 设置 units（等价 `update(units=value)`）。 |
+| `get_units()` | 读取 units 的当前属性值。 |
+| `set_id_(value)` | 设置 id_（等价 `update(id_=value)`）。 |
+| `get_id_()` | 读取 id_ 的当前属性值。 |
 
 ---
 
@@ -87,4 +93,4 @@ if __name__ == "__main__":
 
 ## 同级模块
 
-[base](base.zh.md) ｜ [circle](circle.zh.md) ｜ [ellipse](ellipse.zh.md) ｜ [group](group.zh.md) ｜ [image](image.zh.md) ｜ [line](line.zh.md) ｜ [link](link.zh.md) ｜ [marker](marker.zh.md) ｜ [mask](mask.zh.md) ｜ [path](path.zh.md) ｜ [pattern](pattern.zh.md) ｜ [polygon](polygon.zh.md) ｜ [polyline](polyline.zh.md) ｜ [rect](rect.zh.md) ｜ [svgimage](svgimage.zh.md) ｜ [symbol](symbol.zh.md) ｜ [text](text.zh.md) ｜ [textpath](textpath.zh.md) ｜ [use](use.zh.md)
+[base](base.zh.md) ｜ [circle](circle.zh.md) ｜ [ellipse](ellipse.zh.md) ｜ [group](group.zh.md) ｜ [image](image.zh.md) ｜ [line](line.zh.md) ｜ [link](link.zh.md) ｜ [marker](marker.zh.md) ｜ [mask](mask.zh.md) ｜ [path](path.zh.md) ｜ [pattern](pattern.zh.md) ｜ [polygon](polygon.zh.md) ｜ [polyline](polyline.zh.md) ｜ [rect](rect.zh.md) ｜ [svggroup](svggroup.zh.md) ｜ [svgimage](svgimage.zh.md) ｜ [symbol](symbol.zh.md) ｜ [text](text.zh.md) ｜ [textpath](textpath.zh.md) ｜ [use](use.zh.md)

@@ -59,7 +59,9 @@ find_font_file("KaiTi")       # 字体文件完整路径（找不到返回 None�
 | 函数 | 说明 |
 |---|---|
 | `font_face_css` | 生成字体文件的内嵌 @font-face CSS（把字体 base64 塞进 SVG）。 |
+| `font_link_css` | 生成「不内嵌、只引用本地字体文件」的 @font-face CSS。 |
 | `subset_font` | 按实际用到的文字对字体文件做子集化（需要 fontTools），大幅减小内嵌体积。 |
+| `subset_font_bytes` | 子集化并**返回字节**（不落盘、不打印，内部方法）。 |
 | `font_search_dirs` | 字体文件的搜索目录（按优先级，系统字体目录之前）。 |
 | `find_font_file` | 在字体目录中查找字体文件（对应中文版 `字体查找器` 的简化版）。 |
 

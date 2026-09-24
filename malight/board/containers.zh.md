@@ -20,12 +20,12 @@ ContainerMixin —— 容器元素（g/symbol/use/pattern/marker/a）（方法�
 | 方法 | 说明 |
 |---|---|
 | `g(class_name=None, style_str=None, opacity=None, blend_mode=None, filter=None, id_=None, **kw)` | 创建组元素（对应中文版 `创建组合`）。 |
-| `symbol(id_=None, view_box=None)` | 创建模板（`<symbol>`，对应中文版 `创建模板`）。 |
+| `symbol(id_=None, view_box=None, **kw)` | 创建模板（`<symbol>`，对应中文版 `创建模板`）。 |
 | `use(template_id, x=None, y=None, width=None, height=None, **kw)` | 实例化模板（`<use>`，对应中文版 `神笔模板`）。 |
 | `pattern(x, y, width, height, id_=None, **kw)` | 创建平铺图案（对应中文版 `创建图案`）。 |
 | `copy(el, x=None, y=None, opacity=1.0, id_=None)` | 复制元素（对应中文版 `复制元素`），可指定偏移。 |
 | `a(el, url, tooltip=None, description=None, id_=None)` | 给元素加超链接（对应中文版 `创建链接`）。 |
-| `marker(id_=None, ref_x=0, ref_y=0, width=10, height=10, orient='auto', marker_units=None)` | 创建线端标记（`<marker>`，对应中文版 `创建标记`）。 |
+| `marker(id_=None, ref_x=0, ref_y=0, width=10, height=10, orient='auto', marker_units=None, **kw)` | 创建线端标记（`<marker>`，对应中文版 `创建标记`）。 |
 
 ---
 

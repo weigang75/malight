@@ -16,10 +16,10 @@ if __name__ == "__main__" and not __package__:
         _os.path.abspath(__file__)))))
     __package__ = "malight.elements"
 
-from .base import Element, _paint, _fmt_points, _fmt_transform, _Self
+from .base import Element, _paint, _fmt_points, _fmt_transform
 
 
-class PolylineElement(Element):
+class PolylineElement(Element["PolylineElement"]):
     """
     折线元素（对应中文版 `折线元素`）。 / Polyline element.
 
@@ -49,6 +49,22 @@ class PolylineElement(Element):
         if not xs:
             return (0, 0, 0, 0)
         return (min(xs), min(ys), max(xs), max(ys))
+
+    # ------------------------------------------------------------------
+    # 参数访问器（显式方法，与动态合成的 set_/get_ 等价）。 / Parameter accessors, written out explicitly; identical to the
+    # 展开成真实方法是为了让 IDE 能补全、拼错能报错。 / dynamically synthesized set_/get_. Real methods so the IDE completes them and flags typos.
+    # 本区块由 tools/gen_attr_accessors.py 依 _update_attrs 生成。 / Generated from the _update_attrs signature by tools/gen_attr_accessors.py.
+    # 手改会被 `python tools/gen_attr_accessors.py --check` 判为不同步。 / Hand edits make that check report it as out of sync.
+    # ------------------------------------------------------------------
+    # >>> gen_attr_accessors: begin (generated, do not edit by hand)
+    def set_points(self, value) -> "PolylineElement":
+        """设置 points（等价 ``update(points=value)``）。 / Set points; the same as ``update(points=value)``."""
+        return self.update(points=value)
+
+    def get_points(self) -> object:
+        """读取 points 的当前属性值。 / Read the current raw points attribute."""
+        return self._get_attr_value("points")
+    # <<< gen_attr_accessors: end
 
 # ===========================================================================
 # 使用示例

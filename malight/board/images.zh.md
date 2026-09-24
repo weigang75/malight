@@ -19,10 +19,10 @@ ImageMixin —— 图像（`<image>` 贴图与 SVG 导入）（方法名与 SVG 
 
 | 方法 | 说明 |
 |---|---|
-| `image(image_file, x=0, y=0, width=None, height=None, opacity=1.0, rendering=None, aspect=None, external=False, blend_mode=None, filter=None, id_=None, **extra)` | 贴位图（对应中文版 `贴图`）。本地文件自动 base64 内嵌。 |
-| `paste_svg(svg_file, x=0, y=0, width=None, height=None, opacity=None, blend_mode=None, filter=None, id_=None)` | 贴 SVG 文件（对应中文版 `SVG贴图`）。 |
-| `import_svg_as_group(svg_file, x=0, y=0, scale=None)` | 把 SVG 文件内容解析为可编辑组（对应中文版 `导入SVG为组`）。 |
-| `import_svg_as_symbol(svg_file, id_=None)` | 把 SVG 文件注册为模板，用 pen.template(id) 复用 （对应中文版 `导入SVG为模板`）。 |
+| `image(image_file, x=0, y=0, width=None, height=None, opacity=1.0, rendering=None, aspect=None, external=False, embed=None, blend_mode=None, filter=None, id_=None, **extra)` | 贴位图（对应中文版 `贴图`）。本地文件默认 base64 内嵌。 |
+| `svg_image(svg_file='', x=0, y=0, width=None, height=None, opacity=None, blend_mode=None, filter=None, svg_text=None, id_=None, **kw)` | 贴 SVG 文件并返回「可改源文本」的 SVG 图元素（对应中文版 `SVG贴图`）。 |
+| `import_svg_as_group(svg_file, x=0, y=0, scale=None, **kw)` | 把 SVG 文件内容导入为可编辑的组元素（对应中文版 `导入SVG为组`）。 |
+| `import_svg_as_symbol(svg_file, id_=None, **kw)` | 把 SVG 文件注册为模板，用 pen.template(id) 复用 （对应中文版 `导入SVG为模板`）。 |
 
 ---
 

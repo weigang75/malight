@@ -107,22 +107,28 @@ class TextMixin:
                          blend_mode=blend_mode, filter=filter)
 
     def text_to_path(self, x, y, text, font=SystemFont.DEFAULT, font_size=16,
-                     fill_color=Color.BLACK, letter_spacing=0, id_=None) -> GroupElement:
+                     fill_color=Color.BLACK, letter_spacing=0, id_=None,
+                     **kw) -> GroupElement:
         """
         文字转矢量路径（对应中文版 `文字转路径`，需要 fontTools 库）。 / Convert text into vector paths.
 
         与 write_text 的区别：转出的文字是纯路径，任何环境渲染一致（不依赖系统字体）。
 
+        :param kw: 组的公共样式参数（opacity / blend_mode / filter 等）
+
         示例::
             pen.text_to_path(50, 200, "HELLO", font=SystemFont.ARIAL,
                              font_size=64, fill_color="navy")
         """
-        font_file = tools.find_font_file(font) if font else None
+        # 字体解析与 pen.text 保持一致：字体文件路径 / 内置字体名 / 系统字体族名
+        # 三种写法都认（英文版修正：以前只认系统字体族名，传路径会报找不到字体）。
+        from ..fonts import find_font_file as _find_bundled
+        font_file = (_find_bundled(font) or tools.find_font_file(font)) if font else None
         if not font_file:
             raise FileNotFoundError(t("err.font_not_found", font=font))
         glyphs, transform, w, h = tools.text_to_path_d(text, font_file, font_size,
                                                        letter_spacing)
-        g = self.g(id_=id_)
+        g = self.g(id_=id_, **kw)
         g.node.set("transform", f"translate({x},{y}) {transform}")
         for d, off in glyphs:
             node = SvgNode("path", {"d": d, "fill": _paint(fill_color),

@@ -13,6 +13,7 @@ from .textpath import TextPathElement
 from .image import ImageElement
 from .svgimage import SVGImageElement
 from .group import GroupElement
+from .svggroup import SvgGroupElement
 from .symbol import TemplateElement
 from .use import UseElement
 from .marker import MarkerElement
@@ -22,4 +23,4 @@ from .link import LinkElement
 from .pattern import PatternElement
 from .path import PathElement
 
-__all__ = ["Element", "PathElement", "CircleElement", "EllipseElement", "RectElement", "LineElement", "PolylineElement", "PolygonElement", "TextElement", "TextPathElement", "ImageElement", "SVGImageElement", "GroupElement", "TemplateElement", "UseElement", "MarkerElement", "ClipPathElement", "MaskElement", "LinkElement", "PatternElement"]
+__all__ = ["Element", "PathElement", "CircleElement", "EllipseElement", "RectElement", "LineElement", "PolylineElement", "PolygonElement", "TextElement", "TextPathElement", "ImageElement", "SVGImageElement", "GroupElement", "SvgGroupElement", "TemplateElement", "UseElement", "MarkerElement", "ClipPathElement", "MaskElement", "LinkElement", "PatternElement"]

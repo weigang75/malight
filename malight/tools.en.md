@@ -27,18 +27,38 @@ pts = wave_line_points((0, 0), (200, 0), 20, 4)  # vertices of a wave line
 | Function | Description |
 |---|---|
 | `set_color` | Turn terminal colors on or off; None restores auto-detection. |
-| `color_enabled` | Whether terminal colors are currently on. |
+| `color_enabled` | Whether terminal colors are currently on, judged by stdout. |
 | `paint` | Wrap text in ANSI styling, or return it unchanged when colors are off. |
 | `paint_path` | Emphasise a message line: bold it and paint the file path green. |
+| `print_color` | Print one colored message line, or plain text when colors are off. |
+| `print_red` | Print one message line in red. |
+| `print_green` | Print one message line in green. |
+| `print_yellow` | Print one message line in yellow. |
+| `print_blue` | Print one message line in blue. |
+| `print_magenta` | Print one message line in magenta; "purple" is the same color. |
+| `print_cyan` | Print one message line in cyan. |
+| `print_white` | Print one message line in white. |
+| `print_grey` | Print one message line in grey; "gray" is the same color. |
 | `asset_path` | Locate an asset file inside the package or the project, absolute path; None when missing. |
 | `asset_dir` | Locate an asset directory (same lookup order as asset_path); None when missing. |
 | `human_size` | Format a byte count as a readable string such as "88.3 KB". |
 | `report` | Print a uniform "export succeeded + full path + size" line; the full path is both the return value and what the export helpers return. |
 | `image_to_data_uri` | Turn a local image into a base64 data URI that can be embedded in the SVG and works offline. |
 | `image_size` | Return an image's real width and height (requires Pillow; returns (0, 0) if unreadable). |
+| `linked_path` | Turn a local asset path into the reference written into the SVG when it is not embedded. |
 | `get_svg_size` | Read an SVG file's width and height from its width/height attributes or viewBox. |
 | `scale_svg_file` | Scale an SVG file proportionally and save the result as a new file. |
 | `import_svg_as_nodes` | Parse an SVG file into a node group, used by the board's import_svg_as_group. |
+| `read_svg_text` | Read an SVG file's source text; UTF-8 first, with a GBK fallback and BOM removed. |
+| `svg_text_to_data_uri` | Turn SVG text into a `data:image/svg+xml;base64,...` URI. |
+| `svg_intrinsic_size` | Read the intrinsic size (width, height) from SVG text; (0, 0) when it cannot be determined. |
+| `svg_colors` | List the colours used in SVG text, normalised to lowercase `#rrggbb` in order of first appearance. |
+| `replace_svg_color` | Replace a colour inside SVG text by meaning rather than by raw string. |
+| `walk_svg_nodes` | Walk a node tree depth first, including the node itself. |
+| `svg_node_colors` | List the colours used inside a node tree, normalised to lowercase #rrggbb in order of first appearance. |
+| `replace_svg_node_color` | Replace a colour inside a node tree, i.e. in the nodes returned by import_svg_as_group / import_svg_as_symbol. |
+| `replace_svg_node_text` | Replace a raw substring across a node tree: tag names, node text and every attribute value. |
+| `svg_transform_points` | Map a list of points through an SVG transform. |
 | `has_cairosvg` | Whether cairosvg is available, used to pick the export engine automatically. |
 | `export_png_cairo` | Render an SVG to PNG with cairosvg. |
 | `export_pdf_cairo` | Convert an SVG to PDF with cairosvg. |
@@ -58,6 +78,44 @@ pts = wave_line_points((0, 0), (200, 0), 20, 4)  # vertices of a wave line
 | `text_width` | Estimate how wide a text will be using Pillow and a system font, falling back to one em per character. |
 | `find_font_file` | Find a font file in the Windows font directory. |
 | `text_to_path_d` | Convert text into path data (requires the fontTools library). |
+
+---
+
+## Full example
+
+Run it directly in PyCharm, or from the command line: `python malight/tools.py`
+
+```python
+if __name__ == "__main__":
+    import malight
+
+    # --- 1) Colored messages: one function per color ---
+    malight.print_red("error: export failed")
+    malight.print_green("ok: 3 files exported")
+    malight.print_yellow("warn: font missing, fallback used")
+    malight.print_blue("info: using the Chrome engine")
+    malight.print_magenta("magenta, the same as purple")
+    malight.print_cyan("cyan, handy for debug output")
+    malight.print_white("white, plain notice")
+    malight.print_grey("grey, safe to ignore")
+
+    # --- 2) Generic form: any color, any styling ---
+    malight.print_color("bold, non-bright red",
+                        color="red", bold=True, bright=False)
+    malight.print_color("written to stderr",
+                        color="yellow", file=sys.stderr)
+
+    # --- 3) paint() returns a styled string, it does not print ---
+    print("paint ->", malight.paint("styled text", color="green", bold=True))
+
+    # --- 4) Colors go off when redirected to a file; IDE consoles stay colored ---
+    malight.set_color(False)
+    malight.print_red("no escape codes on this line")
+    malight.set_color(None)                    # None restores auto-detection
+
+    # --- 5) Chinese aliases are the same function objects as the English names ---
+    print("color_enabled() ->", malight.color_enabled())
+```
 
 ---
 

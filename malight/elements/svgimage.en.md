@@ -13,7 +13,26 @@ SVGImageElement: embed another SVG file as an image.
 
 ### `SVGImageElement`
 
-SVG image element: embed another SVG file as an image.
+SVG image element: embed another SVG file as an image whose source text can be rewritten, so one file can be recoloured and reused.
+
+| Method | Description |
+|---|---|
+| `get_svg_text()` | Read the current SVG source text, i.e. the text the recolor methods edit. |
+| `set_svg_text(text)` | Replace the whole SVG source text and re-embed it. |
+| `replace_text(old, new, *, count=…, warn=…)` | Replace a raw substring inside the SVG text. |
+| `replace_color(old, new, *, count=…, warn=…)` | Swap one colour for another inside the SVG text. |
+| `replace_colors(mapping, *, count=…, warn=…)` | Recolour in bulk: swap every pair in the {old: new} mapping in one go. |
+| `svg_colors()` | List the colours the SVG uses, normalised to lowercase #rrggbb in order of first appearance. |
+| `set_svg_file(value)` | Set svg_file; the same as `update(svg_file=value)`. |
+| `get_svg_file()` | Read the current raw svg_file attribute. |
+| `set_x(value)` | Set x; the same as `update(x=value)`. |
+| `get_x()` | Read the current raw x attribute. |
+| `set_y(value)` | Set y; the same as `update(y=value)`. |
+| `get_y()` | Read the current raw y attribute. |
+| `set_width(value)` | Set width; the same as `update(width=value)`. |
+| `get_width()` | Read the current raw width attribute. |
+| `set_height(value)` | Set height; the same as `update(height=value)`. |
+| `get_height()` | Read the current raw height attribute. |
 
 ---
 
@@ -45,23 +64,36 @@ if __name__ == "__main__":
 
     # 1) Place an SVG file as an image: still vector, sharp at any size
     #    embedded as data:image/svg+xml;base64, so it works offline
-    pen.paste_svg(icon_path, x=50, y=60, width=180, height=120)
+    pen.svg_image(icon_path, x=50, y=60, width=180, height=120)
 
-    # 2) Position only: the SVG keeps its original size
-    pen.paste_svg(icon_path, x=300, y=60)
+    # 2) Width only: the height follows the SVG's own ratio
+    pen.svg_image(icon_path, x=300, y=60, width=180)
 
     # 3) Scale, opacity and a filter
-    img = pen.paste_svg(icon_path, x=80, y=220, width=140, height=90,
+    img = pen.svg_image(icon_path, x=60, y=210, width=140, height=90,
                         opacity=0.85, filter=pen.fx.shadow(5, 6, 6))
     print("SVG image bbox:", tuple(round(v, 1) for v in img.bbox()))
 
     # 4) Partial update: only the size changes; position and data stay
-    img.update(width=200, height=130)
+    img.update(width=200, height=120)
     print("bbox after update:", tuple(round(v, 1) for v in img.bbox()))
 
-    # 5) To edit the contents instead, use import_svg_as_group
-    grp = pen.import_svg_as_group(icon_path, x=380, y=230, scale=1.2)
-    print("children after importing as a group:", len(grp.children))
+    # 5) Recolour one file: each element edits its own copy of the text
+    badge = pen.svg_image(icon_path, x=300, y=210, width=80)
+    print("colours used in the file:", badge.svg_colors())
+    badge.replace_color("white", "#ff6b6b")               # white -> red
+    pen.svg_image(icon_path, x=400, y=210, width=80).replace_color("white", "#51cf66")
+    pen.svg_image(icon_path, x=500, y=210, width=80).replace_colors({"white": "#cc5de8", "#4dabf7": "#845ef7"})
+    print("after recolouring:", badge.svg_colors())
+
+    # 6) To edit the contents instead, use import_svg_as_group
+    #    a group element that transforms; recolour through the tools functions
+    grp = pen.import_svg_as_group(icon_path, x=400, y=120, scale=0.7)
+    print("nodes after importing as a group:", len(list(grp.walk())))
+    from malight.tools import replace_svg_node_color
+    replace_svg_node_color(grp.node, "#4dabf7", "#845ef7")
+    print("bbox after importing as a group:",
+          tuple(round(v, 1) for v in grp.bbox()))
 
     pen.finish()
 ```
@@ -70,4 +102,4 @@ if __name__ == "__main__":
 
 ## Sibling modules
 
-[base](base.en.md) ｜ [circle](circle.en.md) ｜ [clippath](clippath.en.md) ｜ [ellipse](ellipse.en.md) ｜ [group](group.en.md) ｜ [image](image.en.md) ｜ [line](line.en.md) ｜ [link](link.en.md) ｜ [marker](marker.en.md) ｜ [mask](mask.en.md) ｜ [path](path.en.md) ｜ [pattern](pattern.en.md) ｜ [polygon](polygon.en.md) ｜ [polyline](polyline.en.md) ｜ [rect](rect.en.md) ｜ [symbol](symbol.en.md) ｜ [text](text.en.md) ｜ [textpath](textpath.en.md) ｜ [use](use.en.md)
+[base](base.en.md) ｜ [circle](circle.en.md) ｜ [clippath](clippath.en.md) ｜ [ellipse](ellipse.en.md) ｜ [group](group.en.md) ｜ [image](image.en.md) ｜ [line](line.en.md) ｜ [link](link.en.md) ｜ [marker](marker.en.md) ｜ [mask](mask.en.md) ｜ [path](path.en.md) ｜ [pattern](pattern.en.md) ｜ [polygon](polygon.en.md) ｜ [polyline](polyline.en.md) ｜ [rect](rect.en.md) ｜ [svggroup](svggroup.en.md) ｜ [symbol](symbol.en.md) ｜ [text](text.en.md) ｜ [textpath](textpath.en.md) ｜ [use](use.en.md)
