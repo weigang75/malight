@@ -13,7 +13,9 @@ description = "malight - SVG drawing toolkit ported and enhanced from Shenbi Mal
 readme = "README.pypi.md"
 license = "MIT"
 license-files = ["LICENSE"]
-authors = [{ name = "weigang", email = "gang.wei@qq.com" }]
+# 注意拆成两条：name+email 合写会生成合并的 "Author-email: weigang <...>"，
+# Author 字段就空了；拆开后元数据是 Author: weigang + Author-email: 纯邮箱。
+authors = [{ name = "weigang" }, { email = "gang.wei@qq.com" }]
 keywords = ["svg", "drawing", "vector", "2d", "graphics", "filter", "magicpen", "malight"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
@@ -44,7 +46,7 @@ full = ["cairosvg", "fontTools", "svgpathtools"]
 [project.urls]
 # 填了 Homepage 之后 tools/pypi_readme.py 会把 PyPI 页里的相对链接
 # 自动改写成 {Homepage}/blob/main/... 的绝对链接：
-Homepage = "https://github.com/weigang75/malight"
+Homepage = "https://github.com/weigang75"
 Repository = "https://github.com/weigang75/malight"
 Issues = "https://github.com/weigang75/malight/issues"
 
@@ -59,10 +61,11 @@ include-package-data = false
 
 # 自动发现 malight 及其全部子包（elements / board / pathkit …），
 # 避免新增子包后忘记登记、发出去的 wheel 少文件。
-# 仓库根的 magicpen/ 只是兼容 shim，源码目录专用，不进 wheel。
+# 仓库根的 magicpen/ 只是兼容 shim，源码目录专用，不进 wheel；
+# malight_app/ 是本地实验应用目录（中国象棋等），同样不进发布包。
 [tool.setuptools.packages.find]
 include = ["malight*"]
-exclude = ["magicpen*", "examples*", "tests*"]
+exclude = ["magicpen*", "examples*", "tests*", "malight_app*"]
 
 [tool.setuptools.dynamic]
 version = { attr = "malight.__version__" }

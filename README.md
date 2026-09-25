@@ -17,15 +17,14 @@ pip install malight[export]         # 追加 PNG / PDF 导出（cairosvg）
 pip install malight[full]           # 全部可选能力
 ```
 
-> **v2.0**：包名 magicpen → **malight**；新增滤镜工厂 `pen.fx`（参考 PS/AI 常用滤镜，
+> **0.1.0（首发）**：包名 magicpen → **malight**；新增滤镜工厂 `pen.fx`（参考 PS/AI 常用滤镜，
 > 支持链式叠加）；新增扩展机制 `malight.ext`。旧脚本 `import magicpen` 仍可用
 > （包内自带兼容 shim），也可用 `python -m malight.compat 旧脚本.py 新脚本.py` 一键迁移。
 >
-> **v2.1**：全面「枚举 + 字符串」双写法（字体 / 颜色 / 选项值，防打字错）；
+> 同样在 0.1.0：全面「枚举 + 字符串」双写法（字体 / 颜色 / 选项值，防打字错）；
 > 新增路径辅助包 `malight.pathkit`（看结构、拖锚点、拖调整点、加点删点、点位存档）；
-> 每个类文件都带可直接运行的完整示例；导出会打印**全路径**方便复制。
->
-> **v2.2**：新增运行时多语言 `malight.i18n`（默认英文，一行切中文）；
+> 每个类文件都带可直接运行的完整示例；导出会打印**全路径**方便复制；
+> 新增运行时多语言 `malight.i18n`（默认英文，一行切中文）；
 > 每个模块旁生成同目录双语文档 `xxx.zh.md` / `xxx.en.md`（ISO 639-1 语言码），
 > **文档跟着代码走**；源码注释与文档字符串改为**摘要级双语**；
 > 英文页**不出现中文**（回归会拦住），示例代码按语言各取一半。
@@ -35,6 +34,13 @@ pip install malight[full]           # 全部可选能力
 > 新增 `PageSetup` 页面设置（`pen.export_pdf(page=PageSetup("A4", margin=24))`，
 > **仅 Chrome 引擎生效**，PNG 是屏幕截图没有纸张概念）；
 > 滤镜 / 文字样式等模块文档直接嵌**效果预览图**（`tools/gen_previews.py` 生成）。
+>
+> **0.2.0（当前版本）**：新增元素模板 `el.to_template()` + `clone()`（原地转
+> `<symbol>` 模板、`<use>` 盖章复用）；**资源嵌入**——字体默认自动子集化
+> （只打包画面实际用到的字），支持整份内嵌 / 本地外链，图片可内嵌或外链；
+> 新增 `pen.svg_image()` 贴 SVG（矢量、可改文本与颜色）；
+> 新增 `import_svg_as_group` 导入组（可位移 / 旋转 / 缩放 / 加滤镜）；
+> 新增带颜色的控制台消息辅助（`malight.tools` 的 `print_red` / `print_green` 等）。
 
 ## 快速上手
 

@@ -279,7 +279,7 @@ def migrate(source, target=None):
     # 1) 导入语句
     code = code.replace("from 神笔码靓.神笔库 import 神笔绘图板",
                         "from malight import Malight")
-    # 旧版英文包名 magicpen -> malight（v2.0 起更名）
+    # 旧版英文包名 magicpen -> malight（发布时即用新名）
     code = code.replace("from magicpen import MagicPen",
                         "from malight import Malight")
     code = code.replace("from magicpen import", "from malight import")

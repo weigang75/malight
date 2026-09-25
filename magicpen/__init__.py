@@ -3,7 +3,7 @@
 magicpen —— 旧包名兼容 shim（源码目录专用）
 ==========================================
 
-malight v2.0 由原 `magicpen` 更名而来。为了让按旧名写的脚本
+malight（神笔码靓英文重制版）由原 `magicpen` 更名而来。为了让按旧名写的脚本
 （``import magicpen`` / ``from magicpen import MagicPen``）继续可用，
 本 shim 把名字全部转发到 ``malight``。
 
