@@ -157,6 +157,13 @@ class ChineseChess(Malight):
                   h_align=TextHAlign.MIDDLE, v_align=TextVAlign.MIDDLE,
                   opacity=0.5)
 
+        url_y = (self.height - self.margin_b - 140 if self.two_sides
+                 else self.height - self.margin_b - font_size / 4 - 21)
+        url_text = self.text(self.width - self.margin_l, url_y, "https://github.com/weigang75",
+                             font=Font.VERDANA, font_size=font_size / 4,
+                             fill_color=Color.BLACK, h_align=TextHAlign.END, opacity=0.7)
+        self.create_link(url_text, "https://github.com/weigang75")
+
     def build_piece(self, x, y, char, font_size, char_color):
         """构建棋子：木色圆片 + 模糊暗环 + 色圈 + 雕刻字（滤镜保留）。"""
         radius = font_size / 1.55

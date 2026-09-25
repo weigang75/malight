@@ -25,6 +25,7 @@ on top and black pieces below, each disc built from layered rings.
 """
 
 import os as _os, sys as _sys
+
 _sys.path.insert(0, _os.path.dirname(_os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))))
 
 from malight import Malight, Color, Font, PaperSize, TextHAlign, TextVAlign
@@ -59,7 +60,7 @@ class InternationalChess(Malight):
 
     def __init__(self, file_path, piece_fill=None, piece_outline=None,
                  board_bg=None, grid_color=None, two_sides=True):
-        w, h = PaperSize.A4_portrait(1)             # 与原版同一张 A4 纵向纸 / same A4 portrait sheet
+        w, h = PaperSize.A4_portrait(1)  # 与原版同一张 A4 纵向纸 / same A4 portrait sheet
         super().__init__(file_path, width=w, height=h)
         self.set_background_color(Color.WHITE)
 
@@ -85,8 +86,8 @@ class InternationalChess(Malight):
     def build_board(self):
         """造棋盘：裁剪虚线框 + 明暗格 + 水印字 + 内外框 + 页面签名。"""
         cell, bx, by = self.cell, self.board_x, self.board_y
-        frame = 5                                  # 棋盘外框边距 / outer frame inset
-        crop = 38                                  # 裁剪余量 / crop margin (原版 38)
+        frame = 5  # 棋盘外框边距 / outer frame inset
+        crop = 38  # 裁剪余量 / crop margin (原版 38)
 
         # 1) 裁剪线：浅色底板 + 虚线裁切框（浅格透明感来自它）
         self.rect(bx - crop, by - crop, cell * 8 + crop * 2, cell * 8 + crop * 2,
@@ -103,7 +104,7 @@ class InternationalChess(Malight):
         index = 0
         for yi in range(8):
             for xi in range(8):
-                if (xi + yi) % 2 == 0:
+                if (xi + yi) % 2 != 0:
                     self.rect(bx + xi * cell, by + yi * cell, cell, cell,
                               fill_color=self.grid_color, stroke_width=0)
                     char_color = self.board_bg
@@ -134,12 +135,13 @@ class InternationalChess(Malight):
                   "Created with MaLight", font=Font.VERDANA,
                   font_size=font_size / 2,
                   fill_color=self.grid_color, h_align=TextHAlign.END,
-                  v_align=TextVAlign.MIDDLE)
+                  v_align=TextVAlign.MIDDLE, opacity=0.5)
         url_y = (self.height - self.margin_b - 160 if self.two_sides
                  else self.height - self.margin_b - font_size / 4 - 21)
-        self.text(self.width - self.margin_l, url_y, "https://gitee.com/march3",
-                  font=Font.VERDANA, font_size=font_size / 4,
-                  fill_color=Color.BLACK, h_align=TextHAlign.END, opacity=0.7)
+        url_text = self.text(self.width - self.margin_l, url_y, "https://github.com/weigang75",
+                             font=Font.VERDANA, font_size=font_size / 4,
+                             fill_color=Color.BLACK, h_align=TextHAlign.END, opacity=0.7)
+        self.create_link(url_text, "https://github.com/weigang75/malight")
 
     def build_piece(self, x, y, char, font_size, char_color):
         """构建棋子：多层圆环 + 投影字 + 模糊暗环（原版五层画法）。"""
@@ -153,7 +155,7 @@ class InternationalChess(Malight):
                   h_align=TextHAlign.MIDDLE, v_align=TextVAlign.MIDDLE
                   ).fx_shadow(1, 1, 0.8)
         self.circle(x, y, font_size / 1.92, stroke_color=Color.BLACK,
-                    stroke_width=2).fx_blur(0.8)           # 立体感 / 3-D feel
+                    stroke_width=2).fx_blur(0.8)  # 立体感 / 3-D feel
         self.circle(x, y, font_size / 1.85, stroke_color=char_color,
                     stroke_width=3)
 
@@ -175,7 +177,7 @@ class InternationalChess(Malight):
     def build_pieces(self):
         """造棋子：白子两行在上、黑子两行在下（单侧布局时收到棋盘下）。"""
         font_size = 50
-        row_gap = font_size * 1.35                 # 棋子行距 / piece row pitch
+        row_gap = font_size * 1.35  # 棋子行距 / piece row pitch
         self._stagger_rows(self.white_pieces, font_size, row_gap,
                            Color.WHITE, self.margin_t + 24)
         shift = -30.0 if self.two_sides else -800.0
