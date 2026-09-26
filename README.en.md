@@ -348,6 +348,7 @@ is rebuilt by the same script.
 | [symbol](malight/elements/symbol.en.md) | TemplateElement: define a reusable symbol. |
 | [text](malight/elements/text.en.md) | TextElement, created by pen.text. |
 | [textpath](malight/elements/textpath.en.md) | TextPathElement: text laid out along a path. |
+| [topath](malight/elements/topath.en.md) | `convert_to_path()` turns geometry elements into an equivalent `PathElement`; |
 | [use](malight/elements/use.en.md) | UseElement: reference a symbol or an already defined shape. |
 
 ### malight/pathkit

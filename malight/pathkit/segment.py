@@ -97,7 +97,7 @@ class PathSegment:
         seg.params    圆弧参数 (rx, ry, 旋转角, 大弧, 顺时针)
     """
 
-    __slots__ = ("cmd", "start", "end", "ctrls", "params")
+    __slots__ = ("cmd", "start", "end", "ctrls", "params", "_arc_table")
 
     def __init__(self, cmd, start=(0.0, 0.0), end=(0.0, 0.0),
                  ctrls=(), params=None):
@@ -113,6 +113,7 @@ class PathSegment:
         self.end = (float(end[0]), float(end[1]))
         self.ctrls = tuple((float(c[0]), float(c[1])) for c in ctrls)
         self.params = params
+        self._arc_table = None   # 采样累积弧长表 (pts, cum)，供 point_at_arc 用
 
     # ---------------------------------------------------------------
     # 基本信息
@@ -202,9 +203,10 @@ class PathSegment:
             seg.point_at(0.5)     # 中点
         """
         t = max(0.0, min(1.0, float(t)))
-        if self.cmd in ("M", "Z"):
-            return self.end if self.cmd == "M" else self.start
-        if self.cmd == "L":
+        if self.cmd == "M":
+            return self.end
+        if self.cmd in ("Z", "L"):
+            # Z 是到子路径起点的闭合直线，与 L 同样插值 / Z closes to the subpath start - interpolate like a line
             return (self.start[0] + (self.end[0] - self.start[0]) * t,
                     self.start[1] + (self.end[1] - self.start[1]) * t)
         if self.cmd == "C":
@@ -286,7 +288,7 @@ class PathSegment:
 
     def length(self, samples=32) -> float:
         """
-        本段长度（直线精确；曲线按 samples 段折线近似；M/Z 为 0）。 / Length of this segment: exact for lines, sampled for curves, zero for M and Z.
+        本段长度（直线精确；曲线按 samples 段折线近似；Z 按闭合直线计，M 为 0）。 / Length of this segment: exact for lines, sampled for curves, the closing line for Z, zero for M.
 
         :param samples: 曲线采样段数（越大越精确）
         :return: 长度（浮点）
@@ -294,7 +296,7 @@ class PathSegment:
         示例::
             seg.length()      # 例如 89.44
         """
-        if self.cmd in ("M", "Z"):
+        if self.cmd == "M":
             return 0.0
         if self.cmd == "L":
             return math.hypot(self.end[0] - self.start[0], self.end[1] - self.start[1])
@@ -302,6 +304,48 @@ class PathSegment:
         pts = [self.point_at(i / n) for i in range(n + 1)]
         return sum(math.hypot(pts[i + 1][0] - pts[i][0], pts[i + 1][1] - pts[i][1])
                    for i in range(n))
+
+    def _build_arc_table(self, samples=48) -> None:
+        """
+        构建本段的「采样累积弧长表」（内部方法）：沿段采样 samples+1 个点，
+        记录每点坐标与从段起点出发的累计折线长度，供 `point_at_arc()` 按
+        真弧长插值——参数 t 与弧长在曲线上不是线性关系，直接拿 t 当
+        弧长比例会偏（越弯偏得越多）。
+        """
+        n = max(4, int(samples))
+        pts = [self.point_at(i / float(n)) for i in range(n + 1)]
+        cum = [0.0]
+        for i in range(n):
+            cum.append(cum[-1] + math.hypot(pts[i + 1][0] - pts[i][0],
+                                            pts[i + 1][1] - pts[i][1]))
+        self._arc_table = (pts, cum)
+
+    def point_at_arc(self, target, samples=48) -> tuple:
+        """
+        取本段上**弧长** target 处（0~本段长度）的坐标（内部方法）。
+
+        与 `point_at(t)` 的区别：t 是命令参数，与弧长只在直线上相等；
+        本方法按采样累积弧长表插值，是真正的「走 target 长度在哪」。
+        """
+        if self._arc_table is None:
+            self._build_arc_table(samples)
+        pts, cum = self._arc_table
+        if target <= 0.0:
+            return pts[0]
+        total = cum[-1]
+        if target >= total:
+            return pts[-1]
+        lo, hi = 0, len(cum) - 1
+        while hi - lo > 1:            # 二分找所在折线小段
+            mid = (lo + hi) // 2
+            if cum[mid] <= target:
+                lo = mid
+            else:
+                hi = mid
+        span = cum[lo + 1] - cum[lo]
+        u = 0.0 if span <= 1e-12 else (target - cum[lo]) / span
+        return (pts[lo][0] + (pts[lo + 1][0] - pts[lo][0]) * u,
+                pts[lo][1] + (pts[lo + 1][1] - pts[lo][1]) * u)
 
     def bbox(self) -> tuple:
         """
@@ -311,7 +355,10 @@ class PathSegment:
             seg.bbox()
         """
         if self.cmd == "Z":
-            return (self.start[0], self.start[1], self.start[0], self.start[1])
+            # 闭合边是真实线段，包围盒按起止两端算 / the closing edge is a real line
+            xs = [self.start[0], self.end[0]]
+            ys = [self.start[1], self.end[1]]
+            return (min(xs), min(ys), max(xs), max(ys))
         pts = [self.start, self.end] + list(self.ctrls)
         if self.is_curve:
             pts += [self.point_at(i / 16.0) for i in range(1, 16)]

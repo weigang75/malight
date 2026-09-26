@@ -16,6 +16,30 @@ from ..elements import (CircleElement, EllipseElement, RectElement,
 from .. import tools
 
 
+def _var_name_for(value):
+    """
+    在调用方的局部/全局变量里找 value 是哪个变量名（`locate` 的标签用）。 / Find which variable name in the caller's scope refers to value (used by `locate` labels).
+
+    只认「同一个对象」（``is``）；字面量元组查不到，返回 None。
+    / Identity-based (``is``) lookup; literal tuples are not found and yield None.
+    """
+    import inspect
+    frame = inspect.currentframe()
+    try:
+        caller = frame.f_back.f_back if frame and frame.f_back else None
+        if caller is None:
+            return None
+        for scope in (caller.f_locals, caller.f_globals):
+            for name, val in scope.items():
+                if name.startswith("_") or callable(val):
+                    continue
+                if val is value:
+                    return name
+        return None
+    finally:
+        del frame
+
+
 class ShapeMixin:
     """ShapeMixin —— 基本图形（SVG 元素命名：circle/ellipse/rect/...）（方法名与 SVG 元素名对应，旧名保留为别名）。 / ShapeMixin - basic shapes, named after their SVG elements (circle / ellipse / rect / ...). """
 
@@ -169,6 +193,52 @@ class ShapeMixin:
         self.line((x, y - height), (x, y + height),
                        stroke_color=color, stroke_width=stroke_width).change_group(g)
         return g
+
+    def locate(self, *points, labels=None, color=Color.RED, size=8,
+               font_size=12, offset=None, font_color=None,
+               stroke_width=1, id_=None, **kw) -> GroupElement:
+        """
+        在给定点画定位十字光标（对应中文版 `定位`），用于调试时查看点在画面上的位置。 / Draw locating crosshairs at the given points (the Chinese edition's locate), for debugging point positions.
+
+        每个点 = 十字光标 + 文本标签。标签文本按优先级取：
+        ``labels`` 里指定的名称 > 调用处**变量名**（如 ``pen.locate(a, b)``
+        会标出 "a"、"b"，用 ``inspect`` 读调用帧实现）> 坐标文本 ``(x, y)``。
+        标记大小（``size``）、字号（``font_size``）、颜色（``color``）、
+        文字偏移（``offset``）均可调。
+
+        :param points: 任意个 (x, y) 元组
+        :param labels: 与 points 等长的名称列表；缺省时先取变量名，再退坐标文本
+        :param color: 十字与文字颜色（默认红）
+        :param size: 十字臂长（像素），即十字总宽的 1/2
+        :param font_size: 标签字号
+        :param offset: 标签相对点的偏移 (dx, dy)；缺省 (size + 2, size + 2)
+        :param font_color: 文字颜色；缺省跟随 color
+        :param stroke_width: 十字线宽
+        :param id_: 元素 id
+        :param kw: 组的公共样式参数（opacity / blend_mode / filter 等）
+
+        :return: GroupElement（所有定位标记的组合）
+
+        示例::
+
+            a, b = (60, 320), (380, 190)
+            pen.locate(a, b)                          # 十字旁标出 a、b
+            pen.locate(a, labels=["起点"])             # 自定义名称
+            pen.locate((10, 20), size=12, color=Color.BLUE, font_size=14)
+        """
+        outer = self.g(id_=id_, **kw)
+        for i, p in enumerate(points):
+            x, y = float(p[0]), float(p[1])
+            if labels is not None and i < len(labels):
+                label = labels[i]
+            else:
+                label = _var_name_for(p) or "({:g}, {:g})".format(x, y)
+            self.cross(x, y, width=size, height=size, color=color,
+                       stroke_width=stroke_width).change_group(outer)
+            dx, dy = offset if offset is not None else (size + 2, size + 2)
+            self.text(x + dx, y + dy, label, font_size=font_size,
+                      fill_color=font_color or color).change_group(outer)
+        return outer
 
     def polyline(self, points, fill_color=Color.TRANSPARENT,
                       stroke_color=Color.BLACK, stroke_width=1,

@@ -30,11 +30,31 @@ Three ways to use it:
 What the page can and cannot do:
 
 * Can: drag anchors, drag handles, an "anchor moves its handles" toggle, double-click a
-  segment to insert an anchor at its midpoint, arrow-key nudging (Shift moves 10 px),
-  reset, download the point JSON, copy the d string and the code.
+  segment to insert an anchor at its midpoint, **double-click an anchor to delete it**
+  (a native browser confirm dialog asks first; the two adjacent segments merge - Reset
+  undoes everything), select an anchor to **switch its segment type** (line L / cubic C /
+  quad Q - Q->C elevates exactly, C->Q approximates via the end-tangent intersection) and
+  toggle **smooth / corner** (while you drag one handle of a smooth anchor, the opposite
+  handle mirrors around it), a **background layer** (`background_svg=` embeds the saved
+  SVG underneath - the "BG" button toggles it and an opacity slider dims it, so the path
+  is edited right on top of the artwork), a **pick mode** (with "Pick" on, every click
+  records a point, shows x/y plus the dx/dy/d to the previous point and generates chained
+  code: same y -> `h_line_to`, same x -> `v_line_to` - the enhanced counterpart of the
+  Chinese version's coordinate picker), the code panel offers **three flavours - set_d,
+  chained and picked** (same generation logic as `chain_code`, compared character by
+  character in the regression), arrow-key nudging (Shift moves 10 px), reset, download
+  the point JSON, copy the d string and the code.
 * Cannot: write back into a running Python process - what you change in the browser lives
   only in the page's own data. For a closed loop use option 3 above and round-trip the JSON.
-* Arcs (`A`) cannot have an anchor inserted - the same limitation as `PathSegment.split()`.
+  The downloaded JSON carries the smooth flags (`sms` / `sme` extra keys); they are ignored
+  when read back, so both sides stay compatible.
+* Arcs (`A`) cannot have an anchor inserted **or be retyped** - the same limitation as
+  `PathSegment.split()`.
+
+The companion convenience method `Malight.svg_editor(path)` generates all of the above in
+one call: call `finish()` first to save the SVG, then `pen.svg_editor(p)` writes an HTML
+that embeds it as the background layer (the enhanced counterpart of the Chinese edition's
+coordinate-picker page, combining point picking and path editing).
 
 With "anchor moves its handles" ticked, the anchor and the handle on that side shift by the
 same amount, so the curve does not suddenly kink - this is exactly
@@ -43,9 +63,10 @@ matching the default `move_anchor()`.
 
 The page's JS and the Python code are **two separate implementations**, so
 `tools/check_htmleditor_js.py` lifts the page's JS out, runs it under Node and checks
-anchor by anchor that both produce an identical d string (in both linking modes). That
-script also has a `--self-test` which injects 8 genuine mistakes to prove the comparisons
-are not vacuously passing.
+anchor by anchor that both produce an identical d string (in both linking modes, and the
+"chained" and "picked" code flavours character by character too). That script also has a
+`--self-test` which injects 10 genuine mistakes to prove the comparisons are not vacuously
+passing.
 
 The page's UI strings come from the `html.*` entries in `malight.i18n`, pulled in for both
 en and zh via `use_language()`, so a single file reads correctly in either language.
@@ -53,6 +74,12 @@ en and zh via `use_language()`, so a single file reads correctly in either langu
 ---
 
 ## Classes and methods
+
+### Functions
+
+| Function | Description |
+|---|---|
+| `chain_code` | Render segments as chained malight Python code. |
 
 ### `PathHTMLEditor`
 
@@ -124,7 +151,18 @@ if __name__ == "__main__":
     from_points.save(os.path.join(_out, "path_editor_from_points.html"))
 
     # -----------------------------------------------------------------
-    # 6) The page is self-contained: no CDN, no framework, works offline
+    # 6) Chained code: the page's "chained" tab shows exactly this flavour
+    #    mirrors the JS
+    #    chainCode(); compared character by character in the Node gate
+    # -----------------------------------------------------------------
+    from malight.pathkit.htmleditor import chain_code
+
+    print("chain code :")
+    print(chain_code(ed.segments(), ed.width, ed.height, ed.fill_color,
+                     ed.stroke_color, ed.stroke_width))
+
+    # -----------------------------------------------------------------
+    # 7) The page is self-contained: no CDN, no framework, works offline
     # -----------------------------------------------------------------
     html = ed.render()
     # write the placeholder on both halves
@@ -133,7 +171,21 @@ if __name__ == "__main__":
     print("page size :", "{:,} bytes".format(_size, _size))
     print("offline :", "http://" not in html and "https://" not in html)
 
+    # a second path: the page dropdown lists both
+    p2 = pen.path(fill_color="none", stroke_color=ColorName.STEELBLUE,
+                  stroke_width=2)
+    p2.move_to((80, 80)).line_to((220, 80)).line_to((150, 170)).close()
+
     pen.finish()
+
+    # -----------------------------------------------------------------
+    # 8) One call -> the dedicated editor HTML:
+    #    embeds the saved SVG as
+    #    background; path editing + point picking in one page
+    #    with no path arg the
+    #    board's paths are collected and the page offers a selector
+    # -----------------------------------------------------------------
+    print("editor page :", pen.svg_editor())
 ```
 
 ---

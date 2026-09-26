@@ -440,6 +440,109 @@ class BoardCore:
             extra="{}x{}".format(fmt_num(self.width), fmt_num(self.height)))
         return self.file_path
 
+    def _collect_path_nodes(self) -> list:
+        """收集画面上的全部路径节点（跳过 defs/symbol 等定义容器，内部方法）。
+
+        给没有 id 的路径节点补上 id —— 页面靠 id 隐藏「正在编辑的那条」背景副本。
+        / Collect every path node on the canvas (skipping defs/symbol/...), and
+        assign ids to id-less ones - the page hides the edited path by id.
+        """
+        skip_tags = {"defs", "symbol", "clippath", "mask", "marker", "pattern",
+                     "style", "script"}
+        out = []
+        counter = [0]
+
+        def walk(node, inside_defs):
+            for child in node.children:
+                tag = (child.tag or "").lower()
+                if tag == "path" and not inside_defs and child.attribs.get("d"):
+                    counter[0] += 1
+                    if not child.attribs.get("id"):
+                        child.attribs["id"] = "bg_path_%d" % counter[0]
+                    out.append({
+                        "id": child.attribs["id"],
+                        "name": child.attribs["id"],
+                        "d": child.attribs["d"],
+                        "fill": child.attribs.get("fill", "none"),
+                        "stroke": child.attribs.get("stroke", "#e63946"),
+                        "strokeWidth": child.attribs.get("stroke-width", 3),
+                    })
+                walk(child, inside_defs or tag in skip_tags)
+
+        walk(self.root_node, False)
+        return out
+
+    def svg_editor(self, path=None, file=None, background=True,
+                   stroke_color="#e63946", stroke_width=3, fill_color="none",
+                   grid=20, title=None) -> str:
+        """
+        生成「SVG 编辑器」专用 HTML：调路径 + 取点定位二合一（对应中文版 `获取坐标点.html` 的加强版）。 / Generate the dedicated SVG-editor HTML: path editing plus point picking in one page.
+
+        页面能力（未来还会扩展）：
+        * **调路径**——拖锚点/调整杆、双击段线加锚点、双击锚点删锚点（有确认）、
+          改段线类型与平滑/尖角，d 串与代码实时更新（`PathHTMLEditor` 全部功能）；
+        * **多路径选择**——不传 ``path`` 时自动收集画面上全部路径，页面右上
+          下拉选择要编辑的那条（背景里的原路径自动隐藏避免重影），逐条编辑；
+        * **取点**——开启「取点」后点画布即记录坐标，显示 x/y 与相邻两点
+          dx/dy/d，自动生成链式代码（同 y → ``h_line_to``、同 x → ``v_line_to``）；
+        * **背景图层**——把已保存的 SVG（`finish()` 的产物）内嵌进页面垫底，
+          路径就叠在原图上拖，所见即所得；透明度滑条可调；
+        * 代码面板 set_d / 链式 / 取点三个页签，一键复制。
+
+        :param path: 要编辑的 PathElement；缺省时收集画面上全部路径供页面选择，
+            一条都没有则是纯取点模式
+        :param file: 输出 HTML 路径；缺省为 ``<SVG文件名>.editor.html``（同目录）
+        :param background: 是否内嵌已保存的 SVG 作背景（需先 `finish()`）
+        :param stroke_color: 编辑路径的默认描边色
+        :param stroke_width: 编辑路径的默认线宽
+        :param fill_color: 编辑路径的默认填充色
+        :param grid: 网格间距（像素）；``0`` 关闭
+        :param title: 页面标题
+        :return: 生成的 HTML 绝对路径
+
+        示例::
+
+            p = pen.path(fill_color="none", stroke_width=3)
+            p.move_to((60, 320)).line_to((380, 190))
+            pen.finish()
+            pen.svg_editor(p)          # 只编辑这一条 / edit just this path
+            pen.svg_editor()           # 收集全部路径，页面里下拉选择 / all paths
+        """
+        from ..pathkit import PathHTMLEditor   # 延迟导入避免循环 / lazy import
+
+        # 先收集路径（给无 id 的补 id），再渲染背景 —— 页面靠 id 隐藏
+        # 「正在编辑的那条」背景副本，顺序反了背景里就没有 id。
+        # / Collect first (assigning ids), render the background after - the
+        # page hides the edited path by id, so the order matters.
+        paths_data = None
+        if path is not None and not path.node.attribs.get("id"):
+            # 显式路径缺 id 时补一个：页面靠 id 隐藏背景里正在编辑的副本，
+            # 必须在渲染背景**之前**落属性。/ Assign an id to a bare path before
+            # the background renders - the page hides the bg copy by that id.
+            path.node.set("id", "path0")
+        if path is None:
+            paths_data = self._collect_path_nodes()
+        bg_svg = None
+        if background:
+            if not self.file_path or not os.path.exists(self.file_path):
+                raise ValueError(t("err.svg_editor_need_finish"))
+            bg_svg = self.root_node.to_xml()
+        common = dict(width=self.width, height=self.height,
+                      stroke_color=stroke_color, stroke_width=stroke_width,
+                      fill_color=fill_color, grid=grid, title=title,
+                      background_svg=bg_svg)
+        if path is not None:
+            editor = PathHTMLEditor(path, **common)
+        elif paths_data:
+            editor = PathHTMLEditor(paths=paths_data, **common)
+        else:
+            # 无路径：纯取点模式（空段列表，页面上没有锚点）/ no path: pure picking
+            editor = PathHTMLEditor(points={"segments": []}, **common)
+        if file is None:
+            stem = os.path.splitext(self.file_path)[0] if self.file_path else "svg"
+            file = stem + ".editor.html"
+        return editor.save(file)
+
     # ------------------------------------------------------------------
     # 导出
     # ------------------------------------------------------------------

@@ -99,9 +99,15 @@ Base class of every element.
 | `animate_motion(path, dur=5, rotate=False, repeat_count='indefinite', begin=0)` | Animate movement along a motion path. |
 | `animate_dash_flow(dur=2, repeat_count='indefinite', dash='8 4', speed=64)` | Animate marching-ants dashes flowing along the stroke. |
 | `remove()` | Remove this element from the canvas. |
+| `delete()` | Delete this element (a semantic alias of `remove()`). |
+| `hide()` | Hide the element (display:none); `show()` brings it back. |
+| `show()` | Show the element, restoring the display value hidden by `hide()`. |
 | `bring_to_front()` | Bring to front by moving last among siblings. |
 | `send_to_back()` | Send to back by moving first among siblings. |
+| `bring_forward(steps=1)` | Move up `steps` sibling levels. |
+| `send_backward(steps=1)` | Move down `steps` sibling levels. |
 | `change_group(new_parent)` | Move the element into another group. |
+| `to_path_element(**kw)` | Convert this element into an equivalent PathElement (the original stays). |
 | `to_group(id_=None)` | Wrap this element in a new group in place and return the group. |
 | `to_template(id_=None, view_box=None)` | Turn this element into a `<symbol>` template in place and return the template. |
 | `clone(dx=0, dy=0, id_=None)` | Clone the element, optionally with an offset and a new id. |
@@ -179,6 +185,15 @@ if __name__ == "__main__":
     # 11) Remove an element from the canvas
     pen.circle(500, 300, 20, fill_color=ColorName.CRIMSON).remove()
 
+    # delete (new in the English edition)
+    #     hide = display:none (show restores); delete = detach but still computable
+    shadow_rule = pen.line((60, 320), (520, 320), stroke_color="gray")
+    print("helper-to-ball distance:",
+          round(((140 - 60) ** 2 + (170 - 320) ** 2) ** 0.5, 1))  # some computation
+    shadow_rule.delete()      # deleted after use, never rendered
+    pen.rect(370, 130, 150, 90, corner_radius=10,
+             fill_color=ColorName.STEELBLUE).hide()   # hidden (show restores)
+
     pen.finish()      # Save the SVG and print the full path, ready to copy
 
 
@@ -193,10 +208,15 @@ from .group import GroupElement  # noqa: E402
 # Bottom import (cont.): same idea for to_template()'s TemplateElement annotation.
 # ---------------------------------------------------------------------------
 from .symbol import TemplateElement  # noqa: E402
+
+# ---------------------------------------------------------------------------
+# Bottom import (cont.): same idea for to_path_element()'s PathElement annotation.
+# ---------------------------------------------------------------------------
+from .path import PathElement  # noqa: E402
 ```
 
 ---
 
 ## Sibling modules
 
-[circle](circle.en.md) ｜ [clippath](clippath.en.md) ｜ [ellipse](ellipse.en.md) ｜ [group](group.en.md) ｜ [image](image.en.md) ｜ [line](line.en.md) ｜ [link](link.en.md) ｜ [marker](marker.en.md) ｜ [mask](mask.en.md) ｜ [path](path.en.md) ｜ [pattern](pattern.en.md) ｜ [polygon](polygon.en.md) ｜ [polyline](polyline.en.md) ｜ [rect](rect.en.md) ｜ [svggroup](svggroup.en.md) ｜ [svgimage](svgimage.en.md) ｜ [symbol](symbol.en.md) ｜ [text](text.en.md) ｜ [textpath](textpath.en.md) ｜ [use](use.en.md)
+[circle](circle.en.md) ｜ [clippath](clippath.en.md) ｜ [ellipse](ellipse.en.md) ｜ [group](group.en.md) ｜ [image](image.en.md) ｜ [line](line.en.md) ｜ [link](link.en.md) ｜ [marker](marker.en.md) ｜ [mask](mask.en.md) ｜ [path](path.en.md) ｜ [pattern](pattern.en.md) ｜ [polygon](polygon.en.md) ｜ [polyline](polyline.en.md) ｜ [rect](rect.en.md) ｜ [svggroup](svggroup.en.md) ｜ [svgimage](svgimage.en.md) ｜ [symbol](symbol.en.md) ｜ [text](text.en.md) ｜ [textpath](textpath.en.md) ｜ [topath](topath.en.md) ｜ [use](use.en.md)

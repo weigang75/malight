@@ -103,4 +103,4 @@ if __name__ == "__main__":
 
 ## Sibling modules
 
-[base](base.en.md) ｜ [circle](circle.en.md) ｜ [clippath](clippath.en.md) ｜ [ellipse](ellipse.en.md) ｜ [group](group.en.md) ｜ [image](image.en.md) ｜ [line](line.en.md) ｜ [link](link.en.md) ｜ [mask](mask.en.md) ｜ [path](path.en.md) ｜ [pattern](pattern.en.md) ｜ [polygon](polygon.en.md) ｜ [polyline](polyline.en.md) ｜ [rect](rect.en.md) ｜ [svggroup](svggroup.en.md) ｜ [svgimage](svgimage.en.md) ｜ [symbol](symbol.en.md) ｜ [text](text.en.md) ｜ [textpath](textpath.en.md) ｜ [use](use.en.md)
+[base](base.en.md) ｜ [circle](circle.en.md) ｜ [clippath](clippath.en.md) ｜ [ellipse](ellipse.en.md) ｜ [group](group.en.md) ｜ [image](image.en.md) ｜ [line](line.en.md) ｜ [link](link.en.md) ｜ [mask](mask.en.md) ｜ [path](path.en.md) ｜ [pattern](pattern.en.md) ｜ [polygon](polygon.en.md) ｜ [polyline](polyline.en.md) ｜ [rect](rect.en.md) ｜ [svggroup](svggroup.en.md) ｜ [svgimage](svgimage.en.md) ｜ [symbol](symbol.en.md) ｜ [text](text.en.md) ｜ [textpath](textpath.en.md) ｜ [topath](topath.en.md) ｜ [use](use.en.md)

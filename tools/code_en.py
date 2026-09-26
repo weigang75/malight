@@ -59,6 +59,10 @@ COMMENT_EN = {
         "10) Pass through custom SVG attributes: keys in extra become attributes",
     "11) 删除元素（从画布移除）":
         "11) Remove an element from the canvas",
+    "hide = display:none（show 恢复）；delete = 摘出画布但对象仍可计算":
+        "hide = display:none (show restores); delete = detach but still computable",
+    "隐藏（show 可恢复）":
+        "hidden (show restores)",
     "保存 SVG，并打印文件全路径（方便直接复制）":
         "Save the SVG and print the full path, ready to copy",
 

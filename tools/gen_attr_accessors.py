@@ -234,6 +234,8 @@ def process(check):
         rel = os.path.relpath(path, ROOT).replace(os.sep, "/")
         src = read(path)
         cls = _class_def(src, path)
+        if cls is None:      # 纯函数模块（如 topath.py）没有元素类，跳过 / no class in this module, skip
+            continue
         params = update_attrs_params(cls)
         if not params:
             continue

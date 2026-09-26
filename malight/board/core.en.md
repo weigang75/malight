@@ -41,6 +41,7 @@ BoardCore - the MagicPen core class (a mixin).
 | `after_create()` | Post-draw hook; subclasses may override. |
 | `rename_file(filename)` | Hook to change the output filename before saving; return a new name or None. |
 | `finish()` | Finish drawing and save the SVG. |
+| `svg_editor(path=None, file=None, background=True, stroke_color='#e63946', stroke_width=3, fill_color='none', grid=20, title=None)` | Generate the dedicated SVG-editor HTML: path editing plus point picking in one page. |
 | `export_png(scale=3, out_file=None, mode=PNGMode.AUTO)` | Export PNG; call finish() first to save the SVG. |
 | `export_pdf(out_file=None, engine=PDFMode.AUTO, page=None)` | Export PDF; call finish() first to save the SVG. |
 | `export_docx(out_file=None)` | Export DOCX. |

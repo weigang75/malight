@@ -117,7 +117,7 @@ from malight.board import MagicPen, MaLight, Malight, FilterAPI, FilterChain
 
 from malight import ext
 
-__version__ = "0.2.1"
+__version__ = "0.3.0"
 
 __all__ = [
     # 绘图板（MaLight 为正式类名 / 商品名，Malight 兼容旧写法）

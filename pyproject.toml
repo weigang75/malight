@@ -46,7 +46,7 @@ full = ["cairosvg", "fontTools", "svgpathtools"]
 [project.urls]
 # 填了 Homepage 之后 tools/pypi_readme.py 会把 PyPI 页里的相对链接
 # 自动改写成 {Homepage}/blob/main/... 的绝对链接：
-Homepage = "https://github.com/weigang75"
+Homepage = "https://github.com/weigang75/malight"
 Repository = "https://github.com/weigang75/malight"
 Issues = "https://github.com/weigang75/malight/issues"
 

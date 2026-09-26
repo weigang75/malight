@@ -30,9 +30,10 @@ from ..i18n import t
 # 用 try/except 兜底：正常导入顺序下拿到真实 PathEditor（PyCharm 有提示），
 # 极端导入顺序下退化为占位类型，绝不会因为循环导入而报错。
 try:
-    from ..pathkit import PathEditor
+    from ..pathkit import PathEditor, PathSegment   # PathSegment 供 slice 切段用 / used by slice()
 except ImportError:                      # pragma: no cover - 极端导入顺序兜底
     PathEditor = object
+    PathSegment = object
 
 
 def _norm_deg(a):
@@ -62,6 +63,7 @@ class PathElement(Element["PathElement"]):
         self._cur = (0.0, 0.0)    # 当前点
         self._start = (0.0, 0.0)  # 当前子路径起点（close 用）
         self._heading = 0.0       # 海龟朝向（度，0=向右，顺时针为正）
+        self._last_quad_ctrl = (0.0, 0.0)  # 上一条 Q/T 的控制点（平滑 T 反射用）
         self._update_attrs(**kw)
 
     def _update_attrs(self, d=None, **kw):
@@ -195,6 +197,7 @@ class PathElement(Element["PathElement"]):
         """
         self._cur = (float(end[0]), float(end[1]))
         self._cmd(f"C{self._pt(*ctrl1)} {self._pt(*ctrl2)} {self._pt(*end)}")
+        self._heading_from_tangent(end, ctrl2)   # 朝向 = 末端切线 / heading = end tangent
         return self
 
     def smooth_cubic_to(self, ctrl2, end) -> "PathElement":
@@ -207,6 +210,7 @@ class PathElement(Element["PathElement"]):
         """
         self._cur = (float(end[0]), float(end[1]))
         self._cmd(f"S{self._pt(*ctrl2)} {self._pt(*end)}")
+        self._heading_from_tangent(end, ctrl2)   # 朝向 = 末端切线 / heading = end tangent
         return self
 
     def quad_to(self, ctrl, end) -> "PathElement":
@@ -219,18 +223,38 @@ class PathElement(Element["PathElement"]):
         """
         self._cur = (float(end[0]), float(end[1]))
         self._cmd(f"Q{self._pt(*ctrl)} {self._pt(*end)}")
+        self._last_quad_ctrl = (float(ctrl[0]), float(ctrl[1]))
+        self._heading_from_tangent(end, ctrl)    # 朝向 = 末端切线 / heading = end tangent
         return self
 
     def smooth_quad_to(self, end) -> "PathElement":
         """平滑二次贝塞尔（对应中文版 `平滑的二次贝塞尔曲线`）。 / Smooth quadratic Bézier continuation. """
+        # 反射上一控制点（无历史时控制点=当前点，与 SVG 规范一致）
+        # / reflect the previous control point (falls back to the current point per spec)
+        refl = (2 * self._cur[0] - self._last_quad_ctrl[0],
+                2 * self._cur[1] - self._last_quad_ctrl[1])
+        self._last_quad_ctrl = refl
         self._cur = (float(end[0]), float(end[1]))
         self._cmd(f"T{self._pt(*end)}")
+        self._heading_from_tangent(end, refl)    # 朝向 = 末端切线 / heading = end tangent
         return self
+
+    def _heading_from_tangent(self, end, ctrl) -> None:
+        """曲线末端切线 = 终点 - 末控制点；零长切线不动朝向（内部方法）。"""
+        dx = float(end[0]) - float(ctrl[0])
+        dy = float(end[1]) - float(ctrl[1])
+        if math.hypot(dx, dy) > 1e-12:
+            self._heading = _norm_deg(math.degrees(math.atan2(dy, dx)))
 
     def ellipse_arc_to(self, rx, ry, end, sweep=0, large_arc=False,
                        x_axis_rotation=0) -> "PathElement":
         """
         椭圆弧（对应中文版 `画椭圆弧`）。 / Elliptical arc.
+
+        画完后海龟朝向更新为弧末端切线方向（后续 `forward` /
+        `turn_right_line` 以弧末端切线为参考）。 / Afterwards the turtle
+        heading equals the arc's end tangent, so forward / turn commands
+        continue from the curve naturally.
 
         :param rx: X 轴半径
         :param ry: Y 轴半径
@@ -243,10 +267,66 @@ class PathElement(Element["PathElement"]):
             p.move_to(50, 100)
             p.ellipse_arc_to(80, 40, (210, 100), sweep=1)   # 半个横椭圆
         """
+        x1, y1 = self._cur
         self._cur = (float(end[0]), float(end[1]))
         self._cmd(f"A{fmt_num(rx)},{fmt_num(ry)} {fmt_num(x_axis_rotation)} "
                   f"{1 if large_arc else 0},{1 if sweep else 0} {self._pt(*end)}")
+        h = self._arc_end_heading((x1, y1), self._cur, rx, ry, x_axis_rotation,
+                                  bool(large_arc), bool(sweep))
+        if h is not None:
+            self._heading = _norm_deg(h)
         return self
+
+    @staticmethod
+    def _arc_end_heading(p1, p2, rx, ry, phi_deg, large_arc, sweep):
+        """
+        求椭圆弧末端切线的朝向角（度，屏幕坐标系，内部方法）。
+
+        用 SVG 端点参数化（W3C F.6.5）反推圆心与末端参数角，
+        再对椭圆参数式求导得切线。失败（退化弧）返回 None。
+        / End-tangent heading of an elliptical arc in degrees (screen coords),
+        via the SVG endpoint-to-center conversion (W3C F.6.5) plus the
+        parametric derivative; None for degenerate arcs.
+        """
+        rx, ry = abs(float(rx)), abs(float(ry))
+        if rx < 1e-12 or ry < 1e-12:
+            return None
+        phi = math.radians(float(phi_deg))
+        cos_p, sin_p = math.cos(phi), math.sin(phi)
+        # F.6.5.1: 端点转到以弦中点为原点、椭圆轴对齐的坐标系 / step 1
+        dx, dy = (p1[0] - p2[0]) / 2, (p1[1] - p2[1]) / 2
+        x1p = cos_p * dx + sin_p * dy
+        y1p = -sin_p * dx + cos_p * dy
+        # F.6.6: 半径过小则放大保证弧存在 / step 2: scale radii if needed
+        lam = x1p * x1p / (rx * rx) + y1p * y1p / (ry * ry)
+        if lam > 1:
+            s = math.sqrt(lam)
+            rx, ry = rx * s, ry * s
+        # F.6.5.2: 求圆心 / step 3: center
+        num = rx * rx * ry * ry - rx * rx * y1p * y1p - ry * ry * x1p * x1p
+        den = rx * rx * y1p * y1p + ry * ry * x1p * x1p
+        if den < 1e-18:
+            return None
+        if num < 0:
+            num = 0.0   # 半径缩放后的浮点误差兜底 / float guard after scaling
+        co = math.sqrt(num / den) * (1 if sweep != large_arc else -1)
+        cxp, cyp = co * rx * y1p / ry, -co * ry * x1p / rx
+        # 末端点在轴对齐系里的坐标：终点与起点关于弦中点对称（x1p,y1p 是起点）
+        # / end point in the axis-aligned frame mirrors the start about the chord midpoint
+        mx, my = (p1[0] + p2[0]) / 2, (p1[1] + p2[1]) / 2
+        ux = (-x1p - cxp) / rx          # cos t2
+        uy = (-y1p - cyp) / ry          # sin t2
+        # 参数式导数：(-rx sin t, ry cos t)，sweep=1 时 t 递增 / parametric derivative
+        vx_f = -rx * uy
+        vy_f = ry * ux
+        sign = 1 if sweep else -1
+        # 转回屏幕坐标（旋转 phi）并归一 / rotate back by phi, normalize
+        vx = sign * (cos_p * vx_f - sin_p * vy_f)
+        vy = sign * (sin_p * vx_f + cos_p * vy_f)
+        norm = math.hypot(vx, vy)
+        if norm < 1e-12:
+            return None
+        return math.degrees(math.atan2(vy, vx))
 
     def arc_to(self, radius, end, sweep=0, large_arc=False) -> "PathElement":
         """
@@ -381,6 +461,12 @@ class PathElement(Element["PathElement"]):
         """
         右转圆弧：画一段向右弯的弧线（对应中文版 `右转弧线`）。 / Turn-right arc: draw an arc curving to the right.
 
+        弦沿转向角平分线方向，画完后朝向 = 弧末端切线方向，
+        后续 `forward` / `turn_right_line` 等自动以新切线为参考。
+        / The chord points along the turn's bisector; afterwards the heading
+        equals the arc's end tangent, so forward / turn_right_line continue
+        from it naturally.
+
         :param angle: 弧对应的转向角（度）
         :param radius: 弧半径
 
@@ -391,20 +477,23 @@ class PathElement(Element["PathElement"]):
             p.forward(80)
         """
         self._heading = _norm_deg(self._heading + angle)
-        # 弧的终点：沿新朝向前进 弦长 = 2r*sin(angle/2)
+        # 弦方向 = 起止朝向的平分角（新朝向回退半个转向角）
+        # / chord direction = bisector of the turn (new heading minus half the turn)
+        mid = math.radians(self._heading - angle / 2)
         chord = 2 * radius * math.sin(math.radians(abs(angle)) / 2)
-        dx = chord * math.cos(self._heading_rad())
-        dy = chord * math.sin(self._heading_rad())
-        end = (self._cur[0] + dx, self._cur[1] + dy)
+        end = (self._cur[0] + chord * math.cos(mid),
+               self._cur[1] + chord * math.sin(mid))
         return self.arc_to(radius, end, sweep=1, large_arc=abs(angle) > 180)
 
     def turn_left_arc(self, angle, radius) -> "PathElement":
         """左转圆弧（对应中文版 `左转弧线`）。 / Turn-left arc. 示例:: p.turn_left_arc(90, 40)"""
         self._heading = _norm_deg(self._heading - angle)
+        # 弦方向 = 起止朝向的平分角（新朝向回退半个转向角）
+        # / chord direction = bisector of the turn (new heading plus half the turn)
+        mid = math.radians(self._heading + angle / 2)
         chord = 2 * radius * math.sin(math.radians(abs(angle)) / 2)
-        dx = chord * math.cos(self._heading_rad())
-        dy = chord * math.sin(self._heading_rad())
-        end = (self._cur[0] + dx, self._cur[1] + dy)
+        end = (self._cur[0] + chord * math.cos(mid),
+               self._cur[1] + chord * math.sin(mid))
         return self.arc_to(radius, end, sweep=0, large_arc=abs(angle) > 180)
 
     def fillet(self, p1, p2, radius) -> "PathElement":
@@ -604,14 +693,14 @@ class PathElement(Element["PathElement"]):
         """
         路径总长度（按段精确/近似求和，对应中文版 `路径长度`）。 / Total path length.
 
+        闭合边（Z）按直线计入。 / The closing edge (Z) counts as a straight line.
+
         :param samples: 曲线段的采样精度
 
         示例::
             print(p.length())
         """
-        from ..pathkit import parse_path_d
-        return sum(s.length(samples) for s in parse_path_d(self.get_d())
-                   if s.cmd != "M")
+        return self._walk(samples)[2]
 
     def point_at(self, ratio) -> tuple:
         """
@@ -623,22 +712,368 @@ class PathElement(Element["PathElement"]):
         示例::
             x, y = p.point_at(0.5)   # 路径正中点
         """
-        from ..pathkit import parse_path_d
-        segs = [s for s in parse_path_d(self.get_d()) if s.cmd != "M"]
-        if not segs:
-            return (0.0, 0.0)
-        lens = [s.length(48) for s in segs]
-        total = sum(lens)
+        segs, lens, total = self._walk()
         if total <= 0:
-            return segs[0].start
-        target = max(0.0, min(1.0, ratio)) * total
+            return segs[0].start if segs else (0.0, 0.0)
+        return self._point_at_len(max(0.0, min(1.0, float(ratio))) * total,
+                                  segs, lens, total)
+
+    # ---------------------------------------------------------------
+    # 几何查询：切线 / 法线 / 弧长取点 / 两路径距离（英文版新增）
+    # ---------------------------------------------------------------
+    def _walk(self, samples=48):
+        """
+        把 d 串解析为「可计量段」列表并累计弧长（内部方法）。
+
+        Z 闭合段换成等效直线段参与采样（闭合边也是粘贴线 / 法线的目标），
+        M 段跳过；每段同时构建采样累积弧长表，段内取点按真弧长插值
+        （参数 t 与弧长在曲线上非线性）。 :return: (segs, lens, total)
+        """
+        from ..pathkit import parse_path_d, PathSegment
+        segs = []
+        for s in parse_path_d(self.get_d()):
+            if s.cmd == "M":
+                continue
+            if s.cmd == "Z":
+                segs.append(PathSegment("L", s.start, s.end))
+            else:
+                segs.append(s)
+        lens = []
+        for s in segs:
+            s._build_arc_table(samples)
+            lens.append(s.length(samples))
+        return segs, lens, sum(lens)
+
+    @staticmethod
+    def _point_at_len(target, segs, lens, total) -> tuple:
+        """按弧长 target 在已解析的段列表上取点（内部方法）。"""
         acc = 0.0
         for s, l in zip(segs, lens):
             if acc + l >= target or s is segs[-1]:
-                t = (target - acc) / l if l > 0 else 0.0
-                return s.point_at(max(0.0, min(1.0, t)))
+                return s.point_at_arc(target - acc)
             acc += l
         return segs[-1].end
+
+    def point_at_distance(self, dist, samples=48) -> tuple:
+        """
+        沿路径从起点走 dist 长度处的坐标（英文版新增）。 / Return the point at an absolute arc length dist from the start.
+
+        :param dist: 弧长距离（负数或超出总长会夹到起/终点）
+        :param samples: 曲线段采样精度
+        :return: (x, y)
+
+        示例::
+            p.point_at_distance(50)     # 沿路径 50 个单位处
+        """
+        segs, lens, total = self._walk(samples)
+        if total <= 0:
+            return segs[0].start if segs else (0.0, 0.0)
+        return self._point_at_len(max(0.0, min(total, float(dist))), segs, lens, total)
+
+    def tangent_at(self, ratio, samples=48) -> tuple:
+        """
+        路径上 ratio 位置的**单位切线向量**（沿行进方向，英文版新增）。 / Unit tangent vector at a given fraction, pointing along the travel direction.
+
+        :param ratio: 0.0 ~ 1.0（按弧长定位，同 `point_at`）
+        :return: (tx, ty) 单位向量
+
+        示例::
+            tx, ty = p.tangent_at(0.3)
+        """
+        segs, lens, total = self._walk(samples)
+        if total <= 0:
+            return (1.0, 0.0)
+        d = max(0.0, min(1.0, float(ratio))) * total
+        eps = max(total * 1e-4, 1e-6)
+        a = self._point_at_len(max(0.0, d - eps), segs, lens, total)
+        b = self._point_at_len(min(total, d + eps), segs, lens, total)
+        dx, dy = b[0] - a[0], b[1] - a[1]
+        n = math.hypot(dx, dy)
+        if n < 1e-12:
+            return (1.0, 0.0)
+        return (dx / n, dy / n)
+
+    def tangent_angle_at(self, ratio, samples=48) -> float:
+        """
+        路径上 ratio 位置的切线角（度，0=向右、顺时针为正，与海龟朝向同义，
+        英文版新增）。 / Tangent angle in degrees at a given fraction
+        (0 = pointing right, clockwise positive, same convention as the turtle heading).
+
+        示例::
+            ang = p.tangent_angle_at(0.5)   # 例如 90.0 表示竖直向下
+        """
+        tx, ty = self.tangent_at(ratio, samples)
+        return math.degrees(math.atan2(ty, tx))
+
+    def normal_at(self, ratio, side="left", samples=48) -> tuple:
+        """
+        路径上 ratio 位置的**单位法线向量**（英文版新增）。
+
+        :param ratio: 0.0 ~ 1.0（按弧长定位）
+        :param side: "left" 行进方向左侧 / "right" 右侧
+            （SVG 的 y 轴向下，「左」指沿行进方向逆时针旋转 90°）
+        :return: (nx, ny) 单位向量
+
+        示例::
+            nx, ny = p.normal_at(0.5)             # 左法线
+            rx, ry = p.normal_at(0.5, "right")    # 右法线
+        """
+        tx, ty = self.tangent_at(ratio, samples)
+        if str(side).lower().startswith("r"):
+            return (-ty, tx)
+        return (ty, -tx)
+
+    def distance_to(self, other, samples=200) -> float:
+        """
+        本路径与另一条路径的**最短距离**（双方按弧长均匀采样后求最近点对，
+        近似值，英文版新增）。 / Shortest distance between this path and another,
+        approximated by nearest pair over uniform arc-length samples.
+
+        :param other: 另一个 PathElement（或能 ``to_point_list()`` 的元素）
+        :param samples: 每条路径的采样点数
+        :return: 最短距离（浮点）
+
+        示例::
+            print(pa.distance_to(pb))     # 两条曲线离得多近
+        """
+        mine = self.to_point_list(samples)
+        get = getattr(other, "to_point_list", None)
+        theirs = get(samples) if callable(get) else [other.point_at(i / samples)
+                                                     for i in range(samples + 1)]
+        if not mine or not theirs:
+            return float("inf")
+        best = float("inf")
+        for a in mine:
+            for b in theirs:
+                d = math.hypot(a[0] - b[0], a[1] - b[1])
+                if d < best:
+                    best = d
+        return best
+
+    def paste_line(self, distance, step=None, taper_angle=90.0,
+                   start=0.0, end=1.0, **kw) -> "PathElement":
+        """
+        沿路径生成**梯形单元组成的粘贴线**（英文版新增，贴纸花边效果）：
+        路径按弧长分成若干等长单元，每个单元是一条贴着路径的梯形
+        （底边在路径上、顶边偏移 ``distance``），全部单元并入一条新路径。 /
+        Build a pasted trim line along the path: arc-length equal units, each a
+        trapezoid sitting on the path with its top edge offset by ``distance``.
+
+        :param distance: 偏移距离，正值贴在行进方向**左侧**、负值贴**右侧**
+        :param step: 每个单元的底边长度；缺省按「单元长约 = |distance|」自动取
+        :param taper_angle: 梯形**腰与底边的夹角**（度，默认 90 = 矩形）；
+                            小于 90 顶边收拢变梯形（如 60），90~180 外扩
+        :param start: 起始比例（按弧长，0.0~1.0），如 0.3
+        :param end: 结束比例（按弧长），如 0.7——只贴 0.3~0.7 这一段
+        :param kw: 新路径的样式覆盖（fill_color / stroke_color 等，缺省继承本路径样式）
+        :return: 新的 PathElement（原路径不变）
+
+        示例（矩形外圈 30%~70% 段贴一圈宽 12 的梯形花边）::
+            frame = pen.rect(40, 40, 200, 140).to_path_element()
+            trim = frame.paste_line(12, step=10, taper_angle=60,
+                                    start=0.3, end=0.7,
+                                    fill_color="white", stroke_color="gray")
+        """
+        segs, lens, total = self._walk()
+        if total <= 0 or abs(distance) < 1e-9:
+            raise ValueError(t("err.paste_line_no_length"))
+        a = max(0.0, min(1.0, float(start))) * total
+        b = max(0.0, min(1.0, float(end))) * total
+        if b < a:
+            a, b = b, a
+        span = b - a
+        if span <= 1e-9:
+            raise ValueError(t("err.paste_line_no_length"))
+        step = abs(float(step)) if step else max(4.0, abs(float(distance)))
+        n = max(1, int(math.ceil(span / step)))
+        du = span / n
+        # 内缩量：腰与底边夹角 θ，高 |distance| → 内底两端各缩 |distance|/tan θ
+        # / inset per end: leg-to-base angle θ and height |distance|
+        tan_a = math.tan(math.radians(float(taper_angle)))
+        inset = abs(float(distance)) / tan_a if abs(tan_a) > 1e-9 else du
+        inset = max(0.0, min(inset, du / 2.0))   # 夹住防止内底交叉 / clamp against bowties
+        trim = PathElement(self.board, self.parent_node)
+        for i in range(n):
+            d0, d1 = a + i * du, min(a + (i + 1) * du, b)
+            p0 = self._point_at_len(d0, segs, lens, total)
+            p1 = self._point_at_len(d1, segs, lens, total)
+            t0 = self.tangent_at(d0 / total)
+            t1 = self.tangent_at(min(1.0, d1 / total))
+            q0 = (p0[0] + t0[1] * distance, p0[1] - t0[0] * distance)
+            q1 = (p1[0] + t1[1] * distance, p1[1] - t1[0] * distance)
+            # 顶边沿切线方向收拢成梯形 / pull the top edge in along the tangents
+            q0 = (q0[0] + t0[0] * inset, q0[1] + t0[1] * inset)
+            q1 = (q1[0] - t1[0] * inset, q1[1] - t1[1] * inset)
+            trim.move_to(p0[0], p0[1])
+            trim.line_to(p1[0], p1[1])
+            trim.line_to(q1[0], q1[1])
+            trim.line_to(q0[0], q0[1])
+            trim.close()
+        trim._copy_paint_from(self)
+        if kw:
+            trim.update(**kw)
+        return trim
+
+    # ---------------------------------------------------------------
+    # 弧长区间切片（英文版新增）：复制指定范围的一段路径
+    # ---------------------------------------------------------------
+    @staticmethod
+    def _param_at_arc(seg, target) -> float:
+        """
+        本段上弧长 target 处对应的命令参数 t（0~1，内部方法）。
+
+        与 `_param_at_arc` 反向的换算：累积弧长表按参数均匀采样，
+        二分找到所在采样区间后线性插值回参数值。
+        """
+        pts, cum = seg._arc_table
+        n = len(cum) - 1
+        if target <= 0.0:
+            return 0.0
+        if target >= cum[-1]:
+            return 1.0
+        lo, hi = 0, n
+        while hi - lo > 1:
+            mid = (lo + hi) // 2
+            if cum[mid] <= target:
+                lo = mid
+            else:
+                hi = mid
+        span = cum[lo + 1] - cum[lo]
+        u = 0.0 if span <= 1e-12 else (target - cum[lo]) / span
+        return (lo + u) / float(n)
+
+    @staticmethod
+    def _split_arc(seg, t) -> tuple:
+        """
+        在参数 t 处把圆弧段一分为二（内部方法）。
+
+        走 SVG 规范 F.6.5 端点参数化：由 arc_center() 拿到圆心与起止角，
+        中点参数角一分为二，两个子弧沿用同一椭圆（rx/ry/旋转角），
+        大弧/方向标记按子弧扫过角重新判定——只要子弧端点仍在同一椭圆上
+        且标记正确，F.6.5 反推出来的圆心与原弧完全一致。
+
+        :return: (前半段, 后半段)；退化弧（无圆心）按直线近似拆分
+        """
+        info = seg.arc_center()
+        if info is None:
+            mid = seg.point_at(t)
+            return (PathSegment("L", seg.start, mid),
+                    PathSegment("L", mid, seg.end))
+        _cx, _cy, rx, ry, _phi, theta1, dtheta = info
+        rot = seg.params[2]
+        pmid = seg.point_at(t)
+
+        def _sub(p_from, p_to, dt):
+            """按扫过角 dt 造一条子弧（内部函数）；接近零退化为直线。"""
+            if abs(dt) < 1e-9:
+                return PathSegment("L", p_from, p_to)
+            return PathSegment("A", p_from, p_to, params=(
+                rx, ry, rot, abs(dt) > math.pi + 1e-9, dt > 0))
+
+        return (_sub(seg.start, pmid, dtheta * t),
+                _sub(pmid, seg.end, dtheta * (1.0 - t)))
+
+    @classmethod
+    def _cut_segment(cls, seg, t0, t1):
+        """
+        取线段参数区间 [t0, t1] 的那一小段（内部方法），形状精确不变。
+
+        C/Q 用 de Casteljau 两次分割（不经过编辑器 split 的 0.02 钳位，
+        边界处不变形）；A 走 `_split_arc`；L/Z 闭边按线性插值。
+        :return: 新的 PathSegment（原段不动）
+        """
+        if t0 <= 1e-9 and t1 >= 1.0 - 1e-9:
+            return seg
+        if seg.cmd == "A":
+            front, _ = cls._split_arc(seg, t1)
+            if t0 > 1e-9:
+                _, front = cls._split_arc(front, t0 / t1)
+            return front
+
+        lerp = lambda a, b, u: (a[0] + (b[0] - a[0]) * u,
+                                a[1] + (b[1] - a[1]) * u)
+
+        def _dec(pts, u):
+            """de Casteljau 一次分割：返回（前半控制点组, 后半控制点组）。"""
+            if len(pts) == 4:            # C 三次 / cubic
+                q0, q1, q2 = lerp(*pts[0:2], u), lerp(pts[1], pts[2], u), lerp(pts[2], pts[3], u)
+                r0, r1 = lerp(q0, q1, u), lerp(q1, q2, u)
+                s = lerp(r0, r1, u)
+                return ((pts[0], q0, r0, s), (s, r1, q2, pts[3]))
+            q0, q1 = lerp(*pts, u)       # Q 二次 / quadratic
+            s = lerp(q0, q1, u)
+            return ((pts[0], q0, s), (s, q1, pts[2]))
+
+        if seg.cmd == "L":
+            return PathSegment("L", lerp(seg.start, seg.end, t0),
+                               lerp(seg.start, seg.end, t1))
+        if seg.cmd == "C":
+            pts = (seg.start,) + tuple(seg.ctrls) + (seg.end,)
+        elif seg.cmd == "Q":
+            pts = (seg.start,) + tuple(seg.ctrls) + (seg.end,)
+        else:
+            return seg
+        left, _ = _dec(pts, t1)          # 前半段覆盖 [0, t1] / left half covers [0, t1]
+        if t0 > 1e-9:
+            _, left = _dec(left, t0 / t1)  # 再取 [t0, t1] / then keep [t0, t1]
+        ctrls = left[1:-1]
+        cmd = "C" if len(left) == 4 else "Q"
+        return PathSegment(cmd, left[0], left[-1], ctrls=ctrls)
+
+    def slice(self, start=0.0, end=1.0, samples=48, **kw) -> "PathElement":
+        """
+        复制路径上指定**弧长区间**的一段，返回新路径（原路径不变，
+        英文版新增）。 / Copy the portion of the path inside the given
+        arc-length range into a new PathElement (the original stays).
+
+        :param start: 起始比例（按真弧长，0.0~1.0），如 0.3
+        :param end: 结束比例（按真弧长），如 0.7
+        :param samples: 曲线采样精度（定位切分点用）
+        :param kw: 新路径的样式覆盖（fill_color / stroke_color 等，
+            缺省继承本路径样式）
+        :return: 新的 PathElement
+
+        区间边界落在某一段中间时该段被精确切分：直线/闭合边按线性插值，
+        贝塞尔曲线走 de Casteljau 分割，圆弧经 SVG 规范 F.6.5 端点参数化
+        拆成两条同椭圆子弧——切出来的新路径与原路径逐点重合。
+        支持多子路径（M 断开的路径）：不连续处自动抬笔（move_to）。
+
+        示例（复制钢琴路径 30%~70% 那一段）::
+            piano2 = piano.slice(0.3, 0.7)
+            piano2.translate(0, 40)      # 拿到手的就是普通路径 / it is a normal path
+        """
+        segs, lens, total = self._walk(samples)
+        if total <= 0:
+            raise ValueError(t("err.slice_no_length"))
+        a = max(0.0, min(1.0, float(start))) * total
+        b = max(0.0, min(1.0, float(end))) * total
+        if b < a:
+            a, b = b, a
+        if b - a <= 1e-9:
+            raise ValueError(t("err.slice_no_length"))
+        new = PathElement(self.board, self.parent_node)
+        acc = 0.0
+        last = None          # 新路径当前点（判断要不要抬笔 / current point of the new path）
+        for s, l in zip(segs, lens):
+            s0, s1 = acc, acc + l
+            acc = s1
+            lo, hi = max(a, s0), min(b, s1)
+            if hi - lo <= total * 1e-9:      # 与区间无交集 / no overlap with the range
+                continue
+            t0 = 0.0 if lo <= s0 + 1e-9 else self._param_at_arc(s, lo - s0)
+            t1 = 1.0 if hi >= s1 - 1e-9 else self._param_at_arc(s, hi - s0)
+            piece = self._cut_segment(s, t0, t1)
+            if last is None or math.hypot(piece.start[0] - last[0],
+                                          piece.start[1] - last[1]) > 1e-6:
+                new.move_to(*piece.start)    # 子路径断开处抬笔 / lift the pen at subpath gaps
+            new._cmds.append(piece.to_d())
+            new._cur = piece.end
+            last = piece.end
+        new._sync()
+        new._copy_paint_from(self)
+        if kw:
+            new.update(**kw)
+        return new
 
     def bbox(self) -> tuple:
         """路径包围盒（按顶点采样近似）。 / Path bounding box, approximated from sampled vertices. """
@@ -855,6 +1290,7 @@ class PathElement(Element["PathElement"]):
         other._cur = self._cur
         other._start = self._start
         other._heading = self._heading
+        other._last_quad_ctrl = self._last_quad_ctrl
         other._editor = None      # 编辑器绑定在原元素上，克隆体按需重建
 
     def _copy_paint_from(self, other) -> "PathElement":
@@ -926,12 +1362,23 @@ if __name__ == "__main__":
     p.show_points(labels=True)
 
     # -----------------------------------------------------------------
-    # 6) 几何信息：长度 / 弧长取点 / 包围盒 / 平移所有命令 / 6) Geometry: length, point at arc length, bounding box, translate every command
+    # 6) 几何信息：长度 / 弧长取点 / 切线法线 / 包围盒 / 平移所有命令 / 6) Geometry: length, arc-length point, tangent & normal, bbox, translate
     # -----------------------------------------------------------------
     _len = p.length()
     print("路径长度 ≈ %.2f / path length ≈ %.2f" % (_len, _len))
     print("弧长 30%% 处坐标: / point at 30%% of arc length:", tuple(round(v, 2) for v in p.point_at(0.3)))
+    print("切线向量 / tangent:", tuple(round(v, 3) for v in p.tangent_at(0.3)),
+          "| 切线角 / angle:", round(p.tangent_angle_at(0.3), 2))
+    print("左法线 / left normal:", tuple(round(v, 3) for v in p.normal_at(0.3)))
+    print("绝对弧长 50 处: / at distance 50:", tuple(round(v, 2) for v in p.point_at_distance(50)))
     print("包围盒: / bounding box:", tuple(round(v, 1) for v in p.bbox()))
+
+    # -----------------------------------------------------------------
+    # 6b) 沿路径贴一圈梯形粘贴线 / 6b) paste a trim line of trapezoid units along the path
+    # -----------------------------------------------------------------
+    trim = p.paste_line(14, step=16, fill_color=ColorName.LAVENDER,
+                        stroke_color=ColorName.DIMGRAY, stroke_width=0.6)
+    print("粘贴线段数: / trim units:", trim.get_d().count("Z"))
 
     # -----------------------------------------------------------------
     # 7) 更多绘制命令：水平/垂直直线、整圆、平滑连接、圆角 / 7) More commands: horizontal and vertical lines, full circle, smooth joins
@@ -975,7 +1422,7 @@ if __name__ == "__main__":
         print("布尔运算需要可选依赖，跳过: / boolean ops need an optional dependency, skipping:", type(exc).__name__)
 
     pen.finish()
-
+    pen.svg_editor()
 # ---------------------------------------------------------------------------
 # 底部导入：show_points() 的返回注解引用 GroupElement，而 group.py 又继承本模块 / Bottom import: show_points()'s return annotation names GroupElement, which subclasses
 # 的 Element —— 顶部互相导入会循环；放到文件末尾两个问题都解决。 / the Element defined here - a top-level import would cycle; the bottom solves both.

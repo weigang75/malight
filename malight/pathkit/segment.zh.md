@@ -54,7 +54,8 @@ print(seg.point_at(0.5)) # 曲线上 50% 处的坐标
 | `to_d()` | 本段还原为 d 片段。 |
 | `point_at(t)` | 取本段上参数 t 处（0~1，按线段长度近似）的坐标。 |
 | `arc_center()` | 圆弧的「端点参数 → 圆心参数」转换（SVG 规范 F.6.5）。 |
-| `length(samples=32)` | 本段长度（直线精确；曲线按 samples 段折线近似；M/Z 为 0）。 |
+| `length(samples=32)` | 本段长度（直线精确；曲线按 samples 段折线近似；Z 按闭合直线计，M 为 0）。 |
+| `point_at_arc(target, samples=48)` | 取本段上**弧长** target 处（0~本段长度）的坐标（内部方法）。 |
 | `bbox()` | 本段的包围盒 (min_x, min_y, max_x, max_y)（曲线按采样近似）。 |
 | `set_anchor(index, x, y)` | 移动本段的一个锚点（起点 index=0，终点 index=1）。 |
 | `set_control(index, x, y)` | 移动本段的一个控制点（调整点）。 |

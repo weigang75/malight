@@ -1196,6 +1196,57 @@ class Element(Generic[_Self]):
             self.parent_node = None
         return self
 
+    def delete(self: _Self) -> _Self:
+        """
+        删除本元素（``remove()`` 的语义化别名，英文版新增）。 / Delete this element (a semantic alias of ``remove()``).
+
+        只是把元素从画布树上摘下来——导出的 SVG 里不再有它；**元素对象本身
+        仍然完好**，几何计算（``length`` / ``point_at`` / ``bbox`` ...）照常可用，
+        需要时还能用 ``change_group()`` 放回画布。用元素做辅助计算、算完就
+        扔的场景正合适；只是暂时不想看见它请用 ``hide()`` / ``show()``。 /
+        Merely detaches the element from the canvas tree - it will not appear in
+        the exported SVG, yet the element object itself stays intact: geometry
+        queries (``length`` / ``point_at`` / ``bbox`` ...) keep working and
+        ``change_group()`` can put it back. Ideal for helper elements used only
+        for computation; use ``hide()`` / ``show()`` when you only want to
+        temporarily hide it.
+
+        示例::
+            guide = pen.line((0, 100), (400, 100), stroke_color="gray")
+            ...  # 用 guide 做一堆计算 / ... use guide for computations
+            guide.delete()      # 画面上不出现，对象还能查坐标 / gone from the canvas, still queryable
+        """
+        return self.remove()
+
+    def hide(self: _Self) -> _Self:
+        """
+        隐藏元素（display:none，英文版新增），``show()`` 可恢复。 / Hide the element (display:none); ``show()`` brings it back.
+
+        元素仍在画布上（占位、仍可计算），只是不显示。会记住隐藏前的
+        display 值，``show()`` 原样恢复。 / The element stays on the canvas
+        (still occupies its place and stays queryable) but is not rendered;
+        the previous display value is remembered so ``show()`` restores it.
+
+        示例::
+            el.hide()     # 画布上看不见了 / not rendered any more
+            el.show()     # 又回来了 / visible again
+        """
+        self._display_before_hide = self.node.attribs.get("display")
+        self.node.set("display", "none")
+        return self
+
+    def show(self: _Self) -> _Self:
+        """
+        显示元素：恢复被 ``hide()`` 隐藏前的 display 值（英文版新增）。 / Show the element, restoring the display value hidden by ``hide()``.
+
+        示例::
+            el.show()
+        """
+        prev = getattr(self, "_display_before_hide", None)
+        self.node.set("display", prev)
+        self._display_before_hide = None
+        return self
+
     def bring_to_front(self: _Self) -> _Self:
         """
         置顶（对应中文版 `置前`）：移到父容器的最后一个。 / Bring to front by moving last among siblings.
@@ -1220,6 +1271,42 @@ class Element(Generic[_Self]):
             self.parent_node.children.insert(0, self.node)
         return self
 
+    def bring_forward(self: _Self, steps=1) -> _Self:
+        """
+        上移 ``steps`` 层（英文版新增；SVG 后画的在上层）。 / Move up ``steps`` sibling levels.
+
+        :param steps: 上移的层数，超出顶层时停在顶
+
+        示例::
+            el.bring_forward()      # 上移一层
+            el.bring_forward(3)     # 上移三层
+        """
+        return self._shift_depth(int(steps))
+
+    def send_backward(self: _Self, steps=1) -> _Self:
+        """
+        下移 ``steps`` 层（英文版新增）。 / Move down ``steps`` sibling levels.
+
+        :param steps: 下移的层数，超出底层时停在底
+
+        示例::
+            el.send_backward()      # 下移一层
+        """
+        return self._shift_depth(-int(steps))
+
+    def _shift_depth(self: _Self, steps) -> _Self:
+        """在兄弟节点中把本元素移动 steps 层（内部方法）。"""
+        p = self.parent_node
+        if p is None or steps == 0:
+            return self
+        i = p.children.index(self.node)
+        j = max(0, min(len(p.children) - 1, i + steps))
+        if j == i:
+            return self
+        p.children.pop(i)
+        p.children.insert(j, self.node)
+        return self
+
     def change_group(self: _Self, new_parent) -> _Self:
         """
         把元素移动到另一个组（对应中文版 `更换组`）。 / Move the element into another group.
@@ -1237,6 +1324,25 @@ class Element(Generic[_Self]):
         new_parent.add(self.node)
         self.parent_node = new_parent
         return self
+
+    def to_path_element(self, **kw) -> "PathElement":
+        """
+        把本元素转换成等价的 `PathElement`（原元素保留，英文版新增）。 / Convert this element into an equivalent PathElement (the original stays).
+
+        几何元素（矩形 / 圆 / 椭圆 / 直线 / 多边形 / 折线）都能精确转换
+        （矩形的圆角用圆弧还原）；`PathElement` 自身原样返回。图片 / 文字等
+        需要轮廓提取的类型暂未实现，会抛 `NotImplementedError` 提示。
+
+        :param kw: 新路径的样式覆盖（fill_color / stroke_color / stroke_width 等；
+            缺省继承本元素样式）
+        :return: PathElement
+
+        示例（矩形转路径后继续编辑 / 贴花边）::
+            frame = pen.rect(40, 40, 200, 140).to_path_element()
+            trim = frame.paste_line(12, step=10, fill_color="white")
+        """
+        from .topath import convert_to_path      # 延迟导入，避免循环依赖
+        return convert_to_path(self, **kw)
 
     def to_group(self, id_=None) -> "GroupElement":
         """
@@ -1557,6 +1663,15 @@ if __name__ == "__main__":
     # 11) 删除元素（从画布移除） / 11) Remove an element from the canvas
     pen.circle(500, 300, 20, fill_color=ColorName.CRIMSON).remove()
 
+    # 12) 隐藏 / 显示 / 删除（英文版新增） / 12) Hide / show / delete (new in the English edition)
+    #     hide = display:none（show 恢复）；delete = 摘出画布但对象仍可计算 / hide = display:none (show restores); delete = detach but still computable
+    shadow_rule = pen.line((60, 320), (520, 320), stroke_color="gray")
+    print("辅助线与球的距离: / helper-to-ball distance:",
+          round(((140 - 60) ** 2 + (170 - 320) ** 2) ** 0.5, 1))  # 拿元素算一算 / some computation
+    shadow_rule.delete()      # 算完就删，画面上不出现 / deleted after use, never rendered
+    pen.rect(370, 130, 150, 90, corner_radius=10,
+             fill_color=ColorName.STEELBLUE).hide()   # 隐藏（show 可恢复） / hidden (show restores)
+
     pen.finish()      # 保存 SVG，并打印文件全路径（方便直接复制） / Save the SVG and print the full path, ready to copy
 
 
@@ -1571,3 +1686,8 @@ from .group import GroupElement  # noqa: E402
 # 底部导入（续）：to_template() 的返回注解同理引用 TemplateElement。 / Bottom import (cont.): same idea for to_template()'s TemplateElement annotation.
 # ---------------------------------------------------------------------------
 from .symbol import TemplateElement  # noqa: E402
+
+# ---------------------------------------------------------------------------
+# 底部导入（续）：to_path_element() 的返回注解同理引用 PathElement。 / Bottom import (cont.): same idea for to_path_element()'s PathElement annotation.
+# ---------------------------------------------------------------------------
+from .path import PathElement  # noqa: E402

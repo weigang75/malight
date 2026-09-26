@@ -327,6 +327,7 @@ python tools/gen_docs.py path       # 只刷新名字匹配的模块
 | [symbol](malight/elements/symbol.zh.md) | TemplateElement 元素（每类一文件，含中文注释与示例）。 |
 | [text](malight/elements/text.zh.md) | TextElement 元素（每类一文件，含中文注释与示例）。 |
 | [textpath](malight/elements/textpath.zh.md) | TextPathElement 元素（每类一文件，含中文注释与示例）。 |
+| [topath](malight/elements/topath.zh.md) | 元素转 PathElement（topath）—— `Element.to_path_element()` 的实现层 |
 | [use](malight/elements/use.zh.md) | UseElement 元素（每类一文件，含中文注释与示例）。 |
 
 ### malight/pathkit

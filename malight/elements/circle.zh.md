@@ -18,7 +18,7 @@ CircleElement 元素（每类一文件，含中文注释与示例）。
 | 方法 | 说明 |
 |---|---|
 | `bbox()` | 包围盒。 |
-| `to_path_element()` | 转换为 PathElement（对应中文版 `转路径元素`）。 |
+| `to_path_element(**kw)` | 转换为 PathElement（对应中文版 `转路径元素`；几何转换走基类实现， 两段圆弧精确还原）。 |
 | `set_x(value)` | 设置 x（等价 `update(x=value)`）。 |
 | `get_x()` | 读取 x 的当前属性值。 |
 | `set_y(value)` | 设置 y（等价 `update(y=value)`）。 |
@@ -88,4 +88,4 @@ if __name__ == "__main__":
 
 ## 同级模块
 
-[base](base.zh.md) ｜ [clippath](clippath.zh.md) ｜ [ellipse](ellipse.zh.md) ｜ [group](group.zh.md) ｜ [image](image.zh.md) ｜ [line](line.zh.md) ｜ [link](link.zh.md) ｜ [marker](marker.zh.md) ｜ [mask](mask.zh.md) ｜ [path](path.zh.md) ｜ [pattern](pattern.zh.md) ｜ [polygon](polygon.zh.md) ｜ [polyline](polyline.zh.md) ｜ [rect](rect.zh.md) ｜ [svggroup](svggroup.zh.md) ｜ [svgimage](svgimage.zh.md) ｜ [symbol](symbol.zh.md) ｜ [text](text.zh.md) ｜ [textpath](textpath.zh.md) ｜ [use](use.zh.md)
+[base](base.zh.md) ｜ [clippath](clippath.zh.md) ｜ [ellipse](ellipse.zh.md) ｜ [group](group.zh.md) ｜ [image](image.zh.md) ｜ [line](line.zh.md) ｜ [link](link.zh.md) ｜ [marker](marker.zh.md) ｜ [mask](mask.zh.md) ｜ [path](path.zh.md) ｜ [pattern](pattern.zh.md) ｜ [polygon](polygon.zh.md) ｜ [polyline](polyline.zh.md) ｜ [rect](rect.zh.md) ｜ [svggroup](svggroup.zh.md) ｜ [svgimage](svgimage.zh.md) ｜ [symbol](symbol.zh.md) ｜ [text](text.zh.md) ｜ [textpath](textpath.zh.md) ｜ [topath](topath.zh.md) ｜ [use](use.zh.md)

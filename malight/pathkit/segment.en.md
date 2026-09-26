@@ -54,7 +54,8 @@ One segment of a path: a single SVG path command in absolute coordinates.
 | `to_d()` | Render this segment back to a d fragment. |
 | `point_at(t)` | Return the point at parameter t (0-1), approximated by arc length. |
 | `arc_center()` | Convert an arc from endpoint parameters to centre parameters, per SVG spec F.6.5. |
-| `length(samples=32)` | Length of this segment: exact for lines, sampled for curves, zero for M and Z. |
+| `length(samples=32)` | Length of this segment: exact for lines, sampled for curves, the closing line for Z, zero for M. |
+| `point_at_arc(target, samples=48)` |  |
 | `bbox()` | Segment bounding box as (min_x, min_y, max_x, max_y), sampled for curves. |
 | `set_anchor(index, x, y)` | Move one of this segment's anchors: index 0 is the start, 1 the end. |
 | `set_control(index, x, y)` | Move one of this segment's control points. |

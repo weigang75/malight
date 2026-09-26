@@ -49,21 +49,17 @@ class CircleElement(Element["CircleElement"]):
         r = float(self.node.attribs.get("r", 0))
         return (cx - r, cy - r, cx + r, cy + r)
 
-    def to_path_element(self) -> "PathElement":
+    def to_path_element(self, **kw) -> "PathElement":
         """
-        转换为 PathElement（对应中文版 `转路径元素`）。 / Convert to a PathElement.
+        转换为 PathElement（对应中文版 `转路径元素`；几何转换走基类实现，
+        两段圆弧精确还原）。 / Convert to a PathElement (base implementation,
+        two exact arc commands).
 
         示例::
             p = c.to_path_element()
-            p.union(other_path)   # 之后可做布尔运算
+            p.union(other_path)   # 之后可做布尔运算 / then boolean ops
         """
-        cx = float(self.node.attribs.get("cx", 0))
-        cy = float(self.node.attribs.get("cy", 0))
-        r = float(self.node.attribs.get("r", 0))
-        p = PathElement(self.board, self.parent_node)
-        p.circle_to((cx, cy))
-        p._copy_paint_from(self)
-        return p
+        return super().to_path_element(**kw)
 
     # ------------------------------------------------------------------
     # 参数访问器（显式方法，与动态合成的 set_/get_ 等价）。 / Parameter accessors, written out explicitly; identical to the

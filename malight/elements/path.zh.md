@@ -54,6 +54,13 @@ PathElement 路径元素（对应中文版 路径元素）。
 | `to_point_list(samples=200)` | 采样路径为顶点列表（对应中文版 `路径点列表`），供布尔/测距等使用。 |
 | `length(samples=48)` | 路径总长度（按段精确/近似求和，对应中文版 `路径长度`）。 |
 | `point_at(ratio)` | 取路径上指定比例位置的坐标（按**弧长**定位，对应中文版 `位置坐标`）。 |
+| `point_at_distance(dist, samples=48)` | 沿路径从起点走 dist 长度处的坐标（英文版新增）。 |
+| `tangent_at(ratio, samples=48)` | 路径上 ratio 位置的**单位切线向量**（沿行进方向，英文版新增）。 |
+| `tangent_angle_at(ratio, samples=48)` | 路径上 ratio 位置的切线角（度，0=向右、顺时针为正，与海龟朝向同义， 英文版新增）。 |
+| `normal_at(ratio, side='left', samples=48)` | 路径上 ratio 位置的**单位法线向量**（英文版新增）。 |
+| `distance_to(other, samples=200)` | 本路径与另一条路径的**最短距离**（双方按弧长均匀采样后求最近点对， 近似值，英文版新增）。 |
+| `paste_line(distance, step=None, taper_angle=90.0, start=0.0, end=1.0, **kw)` | 沿路径生成**梯形单元组成的粘贴线**（英文版新增，贴纸花边效果）： 路径按弧长分成若干等长单元，每个单元是一条贴着路径的梯形 （底边在路径上、顶边偏移 `distance`），全部单元并入一条新路径。 |
+| `slice(start=0.0, end=1.0, samples=48, **kw)` | 复制路径上指定**弧长区间**的一段，返回新路径（原路径不变， 英文版新增）。 |
 | `bbox()` | 路径包围盒（按顶点采样近似）。 |
 | `editor(refresh=False)` | 取得本路径的编辑器（可查看 / 拖动锚点与控制点）。 |
 | `segments()` | 取路径的全部线段对象（每段含起点/终点/控制点）。 |
@@ -125,12 +132,23 @@ if __name__ == "__main__":
     p.show_points(labels=True)
 
     # -----------------------------------------------------------------
-    # 6) 几何信息：长度 / 弧长取点 / 包围盒 / 平移所有命令
+    # 6) 几何信息：长度 / 弧长取点 / 切线法线 / 包围盒 / 平移所有命令
     # -----------------------------------------------------------------
     _len = p.length()
     print("路径长度 ≈ %.2f" % (_len, _len))
     print("弧长 30%% 处坐标:", tuple(round(v, 2) for v in p.point_at(0.3)))
+    print("切线向量", tuple(round(v, 3) for v in p.tangent_at(0.3)),
+          "| 切线角", round(p.tangent_angle_at(0.3), 2))
+    print("左法线", tuple(round(v, 3) for v in p.normal_at(0.3)))
+    print("绝对弧长 50 处:", tuple(round(v, 2) for v in p.point_at_distance(50)))
     print("包围盒:", tuple(round(v, 1) for v in p.bbox()))
+
+    # -----------------------------------------------------------------
+    # 6b) 沿路径贴一圈梯形粘贴线
+    # -----------------------------------------------------------------
+    trim = p.paste_line(14, step=16, fill_color=ColorName.LAVENDER,
+                        stroke_color=ColorName.DIMGRAY, stroke_width=0.6)
+    print("粘贴线段数:", trim.get_d().count("Z"))
 
     # -----------------------------------------------------------------
     # 7) 更多绘制命令：水平/垂直直线、整圆、平滑连接、圆角
@@ -174,7 +192,7 @@ if __name__ == "__main__":
         print("布尔运算需要可选依赖，跳过:", type(exc).__name__)
 
     pen.finish()
-
+    pen.svg_editor()
 # ---------------------------------------------------------------------------
 # 底部导入：show_points() 的返回注解引用 GroupElement，而 group.py 又继承本模块
 # 的 Element —— 顶部互相导入会循环；放到文件末尾两个问题都解决。
@@ -186,4 +204,4 @@ from .group import GroupElement  # noqa: E402
 
 ## 同级模块
 
-[base](base.zh.md) ｜ [circle](circle.zh.md) ｜ [clippath](clippath.zh.md) ｜ [ellipse](ellipse.zh.md) ｜ [group](group.zh.md) ｜ [image](image.zh.md) ｜ [line](line.zh.md) ｜ [link](link.zh.md) ｜ [marker](marker.zh.md) ｜ [mask](mask.zh.md) ｜ [pattern](pattern.zh.md) ｜ [polygon](polygon.zh.md) ｜ [polyline](polyline.zh.md) ｜ [rect](rect.zh.md) ｜ [svggroup](svggroup.zh.md) ｜ [svgimage](svgimage.zh.md) ｜ [symbol](symbol.zh.md) ｜ [text](text.zh.md) ｜ [textpath](textpath.zh.md) ｜ [use](use.zh.md)
+[base](base.zh.md) ｜ [circle](circle.zh.md) ｜ [clippath](clippath.zh.md) ｜ [ellipse](ellipse.zh.md) ｜ [group](group.zh.md) ｜ [image](image.zh.md) ｜ [line](line.zh.md) ｜ [link](link.zh.md) ｜ [marker](marker.zh.md) ｜ [mask](mask.zh.md) ｜ [pattern](pattern.zh.md) ｜ [polygon](polygon.zh.md) ｜ [polyline](polyline.zh.md) ｜ [rect](rect.zh.md) ｜ [svggroup](svggroup.zh.md) ｜ [svgimage](svgimage.zh.md) ｜ [symbol](symbol.zh.md) ｜ [text](text.zh.md) ｜ [textpath](textpath.zh.md) ｜ [topath](topath.zh.md) ｜ [use](use.zh.md)

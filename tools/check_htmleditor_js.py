@@ -21,6 +21,12 @@
          而连动模式漏了某侧调整杆，也只会安静地给出错的弧度）
     5. 逐段 ``splitSegment(i, .5)``  == ``PathSegment.split(0.5)``，L / C / Q 各测一遍
     6. 圆弧段拒绝拆分                == ``NotImplementedError``
+    7. 页面 JS ``chainCode()``       == ``chain_code()`` 逐字符一致
+       （右侧「链式」代码页签是用户会直接复制走的内容，两份实现漂移了
+         复制出去的代码就跑不起来 —— 所以也纳入逐字符比对）
+    8. 取点代码 ``pickCalls``：固定点序列（含同 y / 同 x / 重复点），
+       JS 与 Python 期望的链式调用串逐一比对（move_to / h_line_to /
+       v_line_to / line_to 的智能判断就在这条链上）
 
 M / Z 段不在拆分比对范围内：UI 里双击只会命中可绘制的 L / C / Q 段，
 而 Python 的 ``split()`` 对 M / Z 会返回一个奇怪的 Z 段（历史行为），
@@ -60,6 +66,7 @@ sys.path.insert(0, ROOT)
 from malight import Malight                                        # noqa: E402
 from malight.pathkit import (PathEditor, PathHTMLEditor,          # noqa: E402
                              parse_path_d, segments_to_d)
+from malight.pathkit.htmleditor import chain_code                 # noqa: E402
 
 #: 用例字段：
 #:   name  说明
@@ -132,6 +139,14 @@ MUTATIONS = (
      "var mid = lerp(s.start, s.end);",
      "var mid = lerp(s.start, lerp(s.start, s.end));",
      "M40,200 L120,120 C160,60 260,60 300,120", [0, 1], [1, 2], None),
+    ("链式代码方法名打错（用户复制出去就跑不起来）",
+     '".move_to(" + num(s.end[0])',
+     '".move_tox(" + num(s.end[0])',
+     "M40,200 L120,120 C160,60 260,60 300,120", [0, 1], [1], None),
+    ("取点的垂直线判断失效（同 x 应走 v_line_to）",
+     '".v_line_to(" + y + ")"',
+     '".v_line_to(" + x + ")"',
+     "M40,200 L120,120 C160,60 260,60 300,120", [0, 1], [1], None),
 )
 
 
@@ -193,6 +208,9 @@ var out = {};
 var fresh = function(){ segs = JSON.parse(JSON.stringify(DATA.segments)); };
 var g = buildGroups();
 out.d = toD();
+out.chain = chainCode();
+out.pick = pickCalls([{x: 10, y: 20}, {x: 80, y: 20}, {x: 80, y: 90},
+                     {x: 10, y: 90}, {x: 10, y: 90}]);
 out.anchors = g.anchors.length;
 out.ctrls = g.ctrls.length;
 out.a0 = anchorPos(g.anchors[0]);
@@ -238,6 +256,9 @@ def expected(case, p):
     p.set_d(d)
     ed = PathEditor(p)
     exp = {"d": segments_to_d(segs),
+           "chain": chain_code(segs, 440, 240, "none", "#e63946", 3),
+           "pick": [".move_to(10, 20)", ".h_line_to(80)", ".v_line_to(90)",
+                    ".h_line_to(10)"],   # 末位重复点被跳过 / trailing dup skipped
            "anchors": ed.anchor_count,
            "ctrls": ed.control_count,
            "a0": list(ed.anchor_positions()[0])}

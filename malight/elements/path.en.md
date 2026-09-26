@@ -55,6 +55,13 @@ Path element.
 | `to_point_list(samples=200)` | Sample the path into a vertex list for boolean ops and measurements. |
 | `length(samples=48)` | Total path length. |
 | `point_at(ratio)` | Return the coordinates at a given fraction along the path. |
+| `point_at_distance(dist, samples=48)` | Return the point at an absolute arc length dist from the start. |
+| `tangent_at(ratio, samples=48)` | Unit tangent vector at a given fraction, pointing along the travel direction. |
+| `tangent_angle_at(ratio, samples=48)` | Tangent angle in degrees at a given fraction (0 = pointing right, clockwise positive, same convention as the turtle heading). |
+| `normal_at(ratio, side='left', samples=48)` |  |
+| `distance_to(other, samples=200)` | Shortest distance between this path and another, approximated by nearest pair over uniform arc-length samples. |
+| `paste_line(distance, step=None, taper_angle=90.0, start=0.0, end=1.0, **kw)` | Build a pasted trim line along the path: arc-length equal units, each a trapezoid sitting on the path with its top edge offset by `distance`. |
+| `slice(start=0.0, end=1.0, samples=48, **kw)` | Copy the portion of the path inside the given arc-length range into a new PathElement (the original stays). |
 | `bbox()` | Path bounding box, approximated from sampled vertices. |
 | `editor(refresh=False)` | Get a PathEditor for this path so you can inspect and drag its anchors and control points. |
 | `segments()` | Return every PathSegment, each carrying its start, end and control points. |
@@ -126,12 +133,23 @@ if __name__ == "__main__":
     p.show_points(labels=True)
 
     # -----------------------------------------------------------------
-    # 6) Geometry: length, point at arc length, bounding box, translate every command
+    # 6) Geometry: length, arc-length point, tangent & normal, bbox, translate
     # -----------------------------------------------------------------
     _len = p.length()
     print("path length ≈ %.2f" % (_len, _len))
     print("point at 30%% of arc length:", tuple(round(v, 2) for v in p.point_at(0.3)))
+    print("tangent:", tuple(round(v, 3) for v in p.tangent_at(0.3)),
+          "angle:", round(p.tangent_angle_at(0.3), 2))
+    print("left normal:", tuple(round(v, 3) for v in p.normal_at(0.3)))
+    print("at distance 50:", tuple(round(v, 2) for v in p.point_at_distance(50)))
     print("bounding box:", tuple(round(v, 1) for v in p.bbox()))
+
+    # -----------------------------------------------------------------
+    # 6b) paste a trim line of trapezoid units along the path
+    # -----------------------------------------------------------------
+    trim = p.paste_line(14, step=16, fill_color=ColorName.LAVENDER,
+                        stroke_color=ColorName.DIMGRAY, stroke_width=0.6)
+    print("trim units:", trim.get_d().count("Z"))
 
     # -----------------------------------------------------------------
     # 7) More commands: horizontal and vertical lines, full circle, smooth joins
@@ -175,7 +193,7 @@ if __name__ == "__main__":
         print("boolean ops need an optional dependency, skipping:", type(exc).__name__)
 
     pen.finish()
-
+    pen.svg_editor()
 # ---------------------------------------------------------------------------
 # Bottom import: show_points()'s return annotation names GroupElement, which subclasses
 # the Element defined here - a top-level import would cycle; the bottom solves both.
@@ -187,4 +205,4 @@ from .group import GroupElement  # noqa: E402
 
 ## Sibling modules
 
-[base](base.en.md) ｜ [circle](circle.en.md) ｜ [clippath](clippath.en.md) ｜ [ellipse](ellipse.en.md) ｜ [group](group.en.md) ｜ [image](image.en.md) ｜ [line](line.en.md) ｜ [link](link.en.md) ｜ [marker](marker.en.md) ｜ [mask](mask.en.md) ｜ [pattern](pattern.en.md) ｜ [polygon](polygon.en.md) ｜ [polyline](polyline.en.md) ｜ [rect](rect.en.md) ｜ [svggroup](svggroup.en.md) ｜ [svgimage](svgimage.en.md) ｜ [symbol](symbol.en.md) ｜ [text](text.en.md) ｜ [textpath](textpath.en.md) ｜ [use](use.en.md)
+[base](base.en.md) ｜ [circle](circle.en.md) ｜ [clippath](clippath.en.md) ｜ [ellipse](ellipse.en.md) ｜ [group](group.en.md) ｜ [image](image.en.md) ｜ [line](line.en.md) ｜ [link](link.en.md) ｜ [marker](marker.en.md) ｜ [mask](mask.en.md) ｜ [pattern](pattern.en.md) ｜ [polygon](polygon.en.md) ｜ [polyline](polyline.en.md) ｜ [rect](rect.en.md) ｜ [svggroup](svggroup.en.md) ｜ [svgimage](svgimage.en.md) ｜ [symbol](symbol.en.md) ｜ [text](text.en.md) ｜ [textpath](textpath.en.md) ｜ [topath](topath.en.md) ｜ [use](use.en.md)

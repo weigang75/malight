@@ -98,9 +98,15 @@
 | `animate_motion(path, dur=5, rotate=False, repeat_count='indefinite', begin=0)` | 沿轨迹移动动画（对应中文版 `轨迹移动动画`）。 |
 | `animate_dash_flow(dur=2, repeat_count='indefinite', dash='8 4', speed=64)` | 虚线流动画（对应中文版 `虚线流动画`）：蚂蚁线效果。 |
 | `remove()` | 从画布上删除本元素（对应中文版 `删除`）。 |
+| `delete()` | 删除本元素（`remove()` 的语义化别名，英文版新增）。 |
+| `hide()` | 隐藏元素（display:none，英文版新增），`show()` 可恢复。 |
+| `show()` | 显示元素：恢复被 `hide()` 隐藏前的 display 值（英文版新增）。 |
 | `bring_to_front()` | 置顶（对应中文版 `置前`）：移到父容器的最后一个。 |
 | `send_to_back()` | 置底（英文版新增）：移到父容器的第一个。 |
+| `bring_forward(steps=1)` | 上移 `steps` 层（英文版新增；SVG 后画的在上层）。 |
+| `send_backward(steps=1)` | 下移 `steps` 层（英文版新增）。 |
 | `change_group(new_parent)` | 把元素移动到另一个组（对应中文版 `更换组`）。 |
+| `to_path_element(**kw)` | 把本元素转换成等价的 `PathElement`（原元素保留，英文版新增）。 |
 | `to_group(id_=None)` | 把本元素原地包进一个新组并返回该组（英文版新增）。 |
 | `to_template(id_=None, view_box=None)` | 把本元素原地转成 `<symbol>` 模板并返回该模板（英文版新增）。 |
 | `clone(dx=0, dy=0, id_=None)` | 克隆元素（对应中文版 `克隆`），可指定偏移与新 id。 |
@@ -178,6 +184,15 @@ if __name__ == "__main__":
     # 11) 删除元素（从画布移除）
     pen.circle(500, 300, 20, fill_color=ColorName.CRIMSON).remove()
 
+    # 12) 隐藏 / 显示 / 删除（英文版新增） / 12) Hide / show
+    #     hide = display:none（show 恢复）；delete = 摘出画布但对象仍可计算
+    shadow_rule = pen.line((60, 320), (520, 320), stroke_color="gray")
+    print("辅助线与球的距离:",
+          round(((140 - 60) ** 2 + (170 - 320) ** 2) ** 0.5, 1))  # 拿元素算一算
+    shadow_rule.delete()      # 算完就删，画面上不出现
+    pen.rect(370, 130, 150, 90, corner_radius=10,
+             fill_color=ColorName.STEELBLUE).hide()   # 隐藏（show 可恢复）
+
     pen.finish()      # 保存 SVG，并打印文件全路径（方便直接复制）
 
 
@@ -192,10 +207,15 @@ from .group import GroupElement  # noqa: E402
 # 底部导入（续）：to_template() 的返回注解同理引用 TemplateElement。
 # ---------------------------------------------------------------------------
 from .symbol import TemplateElement  # noqa: E402
+
+# ---------------------------------------------------------------------------
+# 底部导入（续）：to_path_element() 的返回注解同理引用 PathElement。
+# ---------------------------------------------------------------------------
+from .path import PathElement  # noqa: E402
 ```
 
 ---
 
 ## 同级模块
 
-[circle](circle.zh.md) ｜ [clippath](clippath.zh.md) ｜ [ellipse](ellipse.zh.md) ｜ [group](group.zh.md) ｜ [image](image.zh.md) ｜ [line](line.zh.md) ｜ [link](link.zh.md) ｜ [marker](marker.zh.md) ｜ [mask](mask.zh.md) ｜ [path](path.zh.md) ｜ [pattern](pattern.zh.md) ｜ [polygon](polygon.zh.md) ｜ [polyline](polyline.zh.md) ｜ [rect](rect.zh.md) ｜ [svggroup](svggroup.zh.md) ｜ [svgimage](svgimage.zh.md) ｜ [symbol](symbol.zh.md) ｜ [text](text.zh.md) ｜ [textpath](textpath.zh.md) ｜ [use](use.zh.md)
+[circle](circle.zh.md) ｜ [clippath](clippath.zh.md) ｜ [ellipse](ellipse.zh.md) ｜ [group](group.zh.md) ｜ [image](image.zh.md) ｜ [line](line.zh.md) ｜ [link](link.zh.md) ｜ [marker](marker.zh.md) ｜ [mask](mask.zh.md) ｜ [path](path.zh.md) ｜ [pattern](pattern.zh.md) ｜ [polygon](polygon.zh.md) ｜ [polyline](polyline.zh.md) ｜ [rect](rect.zh.md) ｜ [svggroup](svggroup.zh.md) ｜ [svgimage](svgimage.zh.md) ｜ [symbol](symbol.zh.md) ｜ [text](text.zh.md) ｜ [textpath](textpath.zh.md) ｜ [topath](topath.zh.md) ｜ [use](use.zh.md)

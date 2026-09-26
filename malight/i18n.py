@@ -321,13 +321,32 @@ _CATALOGUE["en"] = {
     "html.title": "Path editor - drag the points, copy the code",
     "html.subtitle": ("Drag the squares (anchors) and the dots (control points); "
                       "the d string and the malight code update as you go."),
-    "html.hint": ("Double-click a segment to insert an anchor at its midpoint. "
-                  "Arrow keys nudge the selected point (hold Shift for 10px)."),
+    "html.hint": ("Double-click a segment to insert an anchor at its midpoint; "
+                  "double-click an anchor to delete it (asks first). Select an "
+                  "anchor to switch its segment type (line / cubic / quad) and "
+                  "smooth / corner. Arrow keys nudge (Shift = 10px)."),
     "html.segments": "segments",
     "html.anchors": "anchors",
     "html.controls": "control points",
     "html.d_label": "d string",
     "html.code_label": "malight code",
+    "html.code_setd": "set_d",
+    "html.code_chain": "chained",
+    "html.del_confirm": ("Delete this anchor? The adjacent segments will be "
+                         "merged (Reset undoes everything)."),
+    "html.no_delete": "This anchor cannot be deleted.",
+    "html.anchor_type": "anchor type:",
+    "html.to_line": "Line",
+    "html.to_cubic": "Cubic",
+    "html.to_quad": "Quad",
+    "html.smooth": "Smooth",
+    "html.corner": "Corner",
+    "html.sel_pos": "Selected",
+    "html.code_pick": "picked",
+    "html.bg": "BG",
+    "html.pick": "Pick",
+    "html.clear_pick": "Clear picks",
+    "html.select_path": "Path:",
     "html.copy": "Copy",
     "html.copied": "Copied",
     "html.copy_fail": "Select and copy manually",
@@ -340,6 +359,16 @@ _CATALOGUE["en"] = {
     "html.arc_no_split": ("Arc segments cannot be split; use line, cubic or quad curves."),
     "html.saved": "HTML path editor written: {file}",
     "err.html_no_source": "give one of path=, d= or points=",
+    "err.svg_editor_need_finish": ("Save the SVG with pen.finish() first - the "
+                                   "editor embeds it as the background layer."),
+    "err.to_path_todo": ("to_path_element() is not implemented for {} yet "
+                         "(images / text need outline extraction)."),
+    "err.paste_line_no_length": ("paste_line() needs a path with non-zero length "
+                                 "and a non-zero distance."),
+    "err.slice_no_length": ("slice() needs a path with non-zero length "
+                            "and a non-empty range."),
+    "html.fit": "Fit",
+    "html.zoom_hint": ("wheel = zoom, middle-drag = pan"),
 
     # ---- 路径结构说明 / path structure report ----
     "seg.kind.M": "move",
@@ -496,12 +525,28 @@ _CATALOGUE["zh"] = {
     #      HTML 自带中英切换，不用为了换语言再导一次。
     "html.title": "路径编辑器 —— 拖点、复制代码",
     "html.subtitle": "拖动方块（锚点）与圆点（调整点），右侧的 d 串与 malight 代码会实时更新。",
-    "html.hint": "双击某段可在中点插入一个锚点；选中点后用方向键微调（按住 Shift 走 10 像素）。",
+    "html.hint": "双击段线：在中点插入锚点；双击锚点：删除该点（会先弹窗确认）。选中锚点后可在上方切换段线类型（直线 / 三次 / 二次）与平滑 / 尖角；方向键微调（Shift 走 10 像素）。",
     "html.segments": "段数",
     "html.anchors": "锚点",
     "html.controls": "调整点",
     "html.d_label": "d 串",
     "html.code_label": "malight 代码",
+    "html.code_setd": "set_d",
+    "html.code_chain": "链式",
+    "html.del_confirm": "确定删除这个锚点吗？相邻两段会合并为一段（点「复位」可全部撤销）。",
+    "html.no_delete": "这个锚点不能删除。",
+    "html.anchor_type": "锚点类型：",
+    "html.to_line": "直线",
+    "html.to_cubic": "三次",
+    "html.to_quad": "二次",
+    "html.smooth": "平滑",
+    "html.corner": "尖角",
+    "html.sel_pos": "选中",
+    "html.code_pick": "取点",
+    "html.bg": "背景",
+    "html.pick": "取点",
+    "html.clear_pick": "清除取点",
+    "html.select_path": "路径：",
     "html.copy": "复制",
     "html.copied": "已复制",
     "html.copy_fail": "请手动选中复制",
@@ -513,6 +558,12 @@ _CATALOGUE["zh"] = {
     "html.arc_no_split": "圆弧段不支持拆分锚点，请用直线 / 三次 / 二次曲线。",
     "html.saved": "路径 HTML 编辑器已生成：{file}",
     "err.html_no_source": "path= / d= / points= 至少要给一个",
+    "err.svg_editor_need_finish": "请先用 pen.finish() 保存 SVG——编辑器要把它内嵌为背景图层。",
+    "err.to_path_todo": "{} 暂不支持转 PathElement（图片 / 文字需要轮廓提取，后续版本实现）。",
+    "err.paste_line_no_length": "paste_line() 需要一条有长度的路径，且偏移距离不能为 0。",
+    "err.slice_no_length": "slice() 需要一条有长度的路径，且区间不能为空。",
+    "html.fit": "适应",
+    "html.zoom_hint": "滚轮缩放，中键拖拽平移",
 
     # ---- 路径结构说明 ----
     "seg.kind.M": "移动（起点）",

@@ -39,6 +39,7 @@ BoardCore —— MagicPen 核心类（Mixin）。
 | `after_create()` | 创作后钩子（对应中文版 `完成前执行`），子类可覆写。 |
 | `rename_file(filename)` | 保存前修改文件名钩子（对应中文版 `修改文件名`），返回新文件名或 None。 |
 | `finish()` | 完成并保存 SVG（对应中文版 `完成`）。 |
+| `svg_editor(path=None, file=None, background=True, stroke_color='#e63946', stroke_width=3, fill_color='none', grid=20, title=None)` | 生成「SVG 编辑器」专用 HTML：调路径 + 取点定位二合一（对应中文版 `获取坐标点.html` 的加强版）。 |
 | `export_png(scale=3, out_file=None, mode=PNGMode.AUTO)` | 导出 PNG（对应中文版 `生成PNG`），需 finish() 先保存。 |
 | `export_pdf(out_file=None, engine=PDFMode.AUTO, page=None)` | 导出 PDF（对应中文版 `生成PDF`），需 finish() 先保存。 |
 | `export_docx(out_file=None)` | 导出 DOCX（对应中文版 `生成DOCX`，需 pdf2docx）。 |

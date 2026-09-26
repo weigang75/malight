@@ -18,7 +18,7 @@ Circle element, created by `pen.circle`.
 | Method | Description |
 |---|---|
 | `bbox()` | Bounding box. |
-| `to_path_element()` | Convert to a PathElement. |
+| `to_path_element(**kw)` | Convert to a PathElement (base implementation, two exact arc commands). |
 | `set_x(value)` | Set x; the same as `update(x=value)`. |
 | `get_x()` | Read the current raw x attribute. |
 | `set_y(value)` | Set y; the same as `update(y=value)`. |
@@ -88,4 +88,4 @@ if __name__ == "__main__":
 
 ## Sibling modules
 
-[base](base.en.md) ｜ [clippath](clippath.en.md) ｜ [ellipse](ellipse.en.md) ｜ [group](group.en.md) ｜ [image](image.en.md) ｜ [line](line.en.md) ｜ [link](link.en.md) ｜ [marker](marker.en.md) ｜ [mask](mask.en.md) ｜ [path](path.en.md) ｜ [pattern](pattern.en.md) ｜ [polygon](polygon.en.md) ｜ [polyline](polyline.en.md) ｜ [rect](rect.en.md) ｜ [svggroup](svggroup.en.md) ｜ [svgimage](svgimage.en.md) ｜ [symbol](symbol.en.md) ｜ [text](text.en.md) ｜ [textpath](textpath.en.md) ｜ [use](use.en.md)
+[base](base.en.md) ｜ [clippath](clippath.en.md) ｜ [ellipse](ellipse.en.md) ｜ [group](group.en.md) ｜ [image](image.en.md) ｜ [line](line.en.md) ｜ [link](link.en.md) ｜ [marker](marker.en.md) ｜ [mask](mask.en.md) ｜ [path](path.en.md) ｜ [pattern](pattern.en.md) ｜ [polygon](polygon.en.md) ｜ [polyline](polyline.en.md) ｜ [rect](rect.en.md) ｜ [svggroup](svggroup.en.md) ｜ [svgimage](svgimage.en.md) ｜ [symbol](symbol.en.md) ｜ [text](text.en.md) ｜ [textpath](textpath.en.md) ｜ [topath](topath.en.md) ｜ [use](use.en.md)

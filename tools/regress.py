@@ -166,7 +166,8 @@ def check_eol(rep):
     text_ext = (".py", ".pyi", ".md", ".txt", ".in", ".toml", ".cfg", ".json",
                 ".csv", ".svg", ".html", ".yml", ".yaml")
     skip_dirs = {"__pycache__", "build", "dist", ".idea", "malight.egg-info",
-                 "output"}
+                 "output", "venv", ".venv", "node_modules",
+                 "malight_app"}   # 本地实验应用目录（不进发布包）/ local demo apps, not shipped
     bad = []
     for root, dirs, names in os.walk(ROOT):
         dirs[:] = [d for d in dirs if d not in skip_dirs]
@@ -658,6 +659,77 @@ print("克隆隔离通过：path 命令列表 / 元素属性均独立")
     rep.add("元素", "克隆体与原元素内部状态互不共用", ok, out, sec)
 
 
+def check_slice_visibility(rep, tmp):
+    """
+    `PathElement.slice()` 弧长切片与 `hide()/show()/delete()` 可见性三件套。
+
+    slice 的核心承诺是「切出来的新路径与原路径逐点重合」：区间边界落在
+    段中间时必须精确切分——直线/闭合边线性插值、贝塞尔 de Casteljau、
+    圆弧经 F.6.5 端点参数化拆同椭圆子弧（用户报 piano.复制(0.3, 0.7)
+    需求时一并固化）。delete 只是摘下画布树，元素对象仍可计算。
+    """
+    src = '''
+import math
+from malight import Malight
+
+pen = Malight("_slice_vis", width=800, height=400)
+
+# 含 C + A + L + Z 的混合路径（边界会落在弧与闭合边中间）
+piano = pen.path(fill_color="none", stroke_color="steelblue", stroke_width=3)
+piano.move_to(50, 300).cubic_to((150, 200), (250, 200), (350, 300))
+piano.ellipse_arc_to(70, 70, (420, 230), sweep=1)
+piano.line_to(600, 230).close()
+total = piano.length()
+
+whole = piano.slice(0, 1)
+assert abs(whole.length() - total) < 0.5, (whole.length(), total)
+
+part = piano.slice(0.3, 0.7)
+assert abs(part.length() - total * 0.4) < 0.5, (part.length(), total * 0.4)
+assert math.dist(part.point_at(0.0), piano.point_at(0.3)) < 0.05
+assert math.dist(part.point_at(1.0), piano.point_at(0.7)) < 0.05
+assert math.dist(part.point_at(0.5), piano.point_at(0.5)) < 0.05
+rev = piano.slice(0.7, 0.3)
+assert abs(rev.length() - total * 0.4) < 0.5
+
+# 样式继承 + 覆盖
+assert part.node.attribs.get("stroke") == "#4682b4"
+part2 = piano.slice(0.3, 0.7, stroke_color="crimson")
+assert part2.node.attribs.get("stroke") == "#dc143c"
+
+# 边界落在闭合边（Z -> L）中间
+sq = pen.path()
+sq.move_to(650, 250).line_to(750, 250).line_to(750, 350).close()
+sq_total = sq.length()
+sq_part = sq.slice(0.7, 0.9)
+assert abs(sq_part.length() - sq_total * 0.2) < 0.2
+assert math.dist(sq_part.point_at(0.0), sq.point_at(0.7)) < 0.05
+
+# hide / show：display 往返，隐藏前已有 display 值也能恢复
+c = pen.circle(100, 100, 30, fill_color="tomato")
+c.hide()
+assert c.node.attribs.get("display") == "none"
+c.show()
+assert c.node.attribs.get("display") is None
+c.node.set("display", "inline")
+c.hide()
+assert c.node.attribs.get("display") == "none"
+c.show()
+assert c.node.attribs.get("display") == "inline", c.node.attribs.get("display")
+c.node.set("display", None)
+
+# delete：从画布摘除但对象照常可计算，还能再切片
+c.delete()
+assert c.parent_node is None and c.bbox() is not None
+piano.delete()
+p2 = piano.slice(0.0, 0.5)
+assert p2.length() > 0
+print("slice 弧长切片 + hide/show/delete 全部通过")
+'''
+    ok, out, sec = run_py(["-c", src], tmp)
+    rep.add("元素", "slice 弧长切片精确 + hide/show/delete 可见性", ok, out, sec)
+
+
 def check_chain_typing(rep):
     """
     链式方法的返回类型必须是**具体元素类**（`tools/check_chain_typing.py`）。
@@ -995,6 +1067,7 @@ def main(argv):
         check_fx_chain(rep, tmp)
         check_element_attrs(rep)
         check_clone_isolation(rep, tmp)
+        check_slice_visibility(rep, tmp)
         check_chain_typing(rep)
         check_attr_accessors(rep)
         check_svg_text_edit(rep, tmp)
